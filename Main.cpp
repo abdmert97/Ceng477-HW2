@@ -11,6 +11,12 @@ Scene *scene;
 
 int main(int argc, char *argv[])
 {
+
+	// Testing
+	argc = 2;
+	const char* xmlPath = "different_projection_type_example/flag_turkey/flag_turkey_perspective.xml";
+	//
+	
     if (argc != 2)
     {
         cout << "Please run the rasterizer as:" << endl
@@ -19,7 +25,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        const char *xmlPath = argv[1];
+        //const char *xmlPath = argv[1];
 
         scene = new Scene(xmlPath);
 
@@ -37,7 +43,7 @@ int main(int argc, char *argv[])
             // Converts PPM image in given path to PNG file, by calling ImageMagick's 'convert' command.
             // Notice that os_type is not given as 1 (Ubuntu) or 2 (Windows), below call doesn't do conversion.
             // Change os_type to 1 or 2, after being sure that you have ImageMagick installed.
-            scene->convertPPMToPNG(scene->cameras[i]->outputFileName, 99);
+            scene->convertPPMToPNG(scene->cameras[i]->outputFileName, 2);
         }
 
         return 0;

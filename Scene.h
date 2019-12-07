@@ -17,7 +17,7 @@
 #include "Triangle.h"
 #include "Vec3.h"
 #include "Vec4.h"
-
+#include  "Matrix4.h"
 using namespace std;
 
 class Scene
@@ -37,12 +37,17 @@ public:
 	vector< Model* > models;
 
 	Scene(const char *xmlPath);
-
+	
 	void initializeImage(Camera* camera);
+	Matrix4 getCameraTransformMatrix(Camera* camera);
 	void forwardRenderingPipeline(Camera* camera);
 	int makeBetweenZeroAnd255(double value);
 	void writeImageToPPMFile(Camera* camera);
 	void convertPPMToPNG(string ppmFileName, int osType);
+	Matrix4 OrthographicProjection(Camera* camera);
+	Matrix4 PerspectiveProjection(Camera* camera);
+	Matrix4 ViewportProjection(Camera* camera);
+	Vec4* getVector4(Vec3 vector);
 };
 
 #endif

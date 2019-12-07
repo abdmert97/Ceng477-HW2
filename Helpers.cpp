@@ -156,7 +156,20 @@ Matrix4 getIdentityMatrix()
 
     return result;
 }
+Matrix4 getZeroMatrix()
+{
+	Matrix4 result;
 
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			result.val[i][j] = 0.0;
+		}
+	}
+
+	return result;
+}
 /*
  * Multiply matrices m1 (Matrix4) and m2 (Matrix4) and return the result matrix r (Matrix4).
  */

@@ -25,9 +25,129 @@ using namespace std;
 */
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
-	// TODO: Implement this function.
-}
+	Matrix4 cameraMatrix = getCameraTransformMatrix(camera);
 
+	Matrix4 projectionMatrix;
+	if(projectionType == 0) // orthographic
+	{
+		projectionMatrix = OrthographicProjection(camera);
+	}
+	else  // perspective
+	{
+		projectionMatrix = PerspectiveProjection(camera);
+	}
+
+	Matrix4 viewPort = ViewportProjection(camera);
+	Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPort,multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
+
+	for (int i = 0 ; i < models.size();i++)
+	{
+		for (int j = 0 ; j < models[i]->numberOfTriangles;j++)
+		{
+
+		
+			Vec3 firstVertice =	*vertices[models[i]->triangles[j].getFirstVertexId()-1];
+			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId()-1];
+			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId()-1];
+
+
+			Vec4 first = multiplyMatrixWithVec4(worldMatrix,*getVector4(firstVertice));
+			Vec4 second = multiplyMatrixWithVec4(worldMatrix, *getVector4(secondVertice));
+			Vec4 third = multiplyMatrixWithVec4(worldMatrix, *getVector4(thirdVertice));
+			int x = (int)first.x;
+			int y = (int)first.y;
+			cout <<first<< endl;
+			image[0][0] = *(new Color(0, 0, 0));
+			//image[(int)second.x][(int)second.y] = *(new Color(0, 0, 0));
+		//	image[(int)third.x][(int)third.y] = *(new Color(0, 0, 0));
+		}
+	}
+
+	
+}
+Vec4 * Scene::getVector4(Vec3 vector)
+{
+	Vec4* vec = new Vec4(vector.x, vector.y, vector.z, 1, 0);
+	return  vec;
+}
+Matrix4 Scene::getCameraTransformMatrix(Camera* camera)
+{
+	Matrix4 cameraTranslate = getIdentityMatrix();
+	Vec4 * cameraPosition = new Vec4(camera->pos.x, camera->pos.y, camera->pos.z, 1, 0);
+	cameraTranslate.val[0][3] = -camera->pos.x;
+	cameraTranslate.val[1][3] = -camera->pos.y;
+	cameraTranslate.val[2][3] = -camera->pos.z;
+	Matrix4 cameraRotation = getIdentityMatrix();
+	
+	cameraRotation.val[0][0] = camera->u.x;
+	cameraRotation.val[0][1] = camera->u.y;
+	cameraRotation.val[0][2] = camera->u.z;
+
+	cameraRotation.val[1][0] = camera->v.x;
+	cameraRotation.val[1][1] = camera->v.y;
+	cameraRotation.val[1][2] = camera->v.z;
+
+	cameraRotation.val[2][0] = camera->w.x;
+	cameraRotation.val[2][1] = camera->w.y;
+	cameraRotation.val[2][2] = camera->w.z;
+
+
+	return multiplyMatrixWithMatrix(cameraRotation, cameraTranslate);
+	
+}
+Matrix4 Scene::OrthographicProjection(Camera* camera)
+{
+	Matrix4 projectionMatix = getIdentityMatrix();
+	float xDistance = camera->right - camera->left;
+	float yDistance = camera->top - camera->bottom;
+	float zDistance = camera->far - camera->near;
+	
+	projectionMatix.val[0][0] = 2/xDistance;
+	projectionMatix.val[1][1] = 2/yDistance;
+	projectionMatix.val[2][2] = 2/zDistance;
+
+	projectionMatix.val[0][3] = -(camera->right+camera->left) / xDistance;
+	projectionMatix.val[1][3] = -(camera->top+camera->bottom) / yDistance;
+	projectionMatix.val[2][3] = -(camera->far+camera->near) / zDistance;
+
+	return  projectionMatix;
+}
+Matrix4 Scene::PerspectiveProjection(Camera* camera)
+{
+	Matrix4 projectionMatix = getIdentityMatrix();
+	float xDistance = camera->right - camera->left;
+	float yDistance = camera->top - camera->bottom;
+	float zDistance = camera->far - camera->near;
+	float two_n = 2 * camera->near;
+	
+	projectionMatix.val[0][0] = two_n / xDistance;
+	projectionMatix.val[1][1] = two_n / yDistance;
+	projectionMatix.val[2][2] = -(camera->far + camera->near) / zDistance;
+
+	projectionMatix.val[0][2] = -(camera->right + camera->left) / xDistance;
+	projectionMatix.val[1][2] = -(camera->top + camera->bottom) / yDistance;
+	projectionMatix.val[2][3] = -2*(camera->far * camera->near) / zDistance;
+	
+	projectionMatix.val[3][2] = -1;
+	projectionMatix.val[3][3] = 0;
+	return  projectionMatix;
+}
+Matrix4 Scene::ViewportProjection(Camera* camera)
+{
+	Matrix4 projectionMatix = getIdentityMatrix();
+	projectionMatix.val[0][0] = camera->horRes / 2;
+	projectionMatix.val[1][1] = camera->verRes / 2;
+	projectionMatix.val[2][2] = 0.5;
+
+	projectionMatix.val[0][3] = (camera->horRes -1) / 2;
+	projectionMatix.val[1][3] = (camera->verRes - 1) / 2;
+	projectionMatix.val[2][3] = 0.5;
+
+	
+	projectionMatix.val[3][3] = 0;
+
+	return projectionMatix;
+}
 /*
 	Parses XML file
 */
