@@ -39,7 +39,6 @@ public:
 	Scene(const char *xmlPath);
 	
 	void initializeImage(Camera* camera);
-	Matrix4 getCameraTransformMatrix(Camera* camera);
 	void forwardRenderingPipeline(Camera* camera);
 	int makeBetweenZeroAnd255(double value);
 	void writeImageToPPMFile(Camera* camera);
@@ -47,7 +46,14 @@ public:
 	Matrix4 OrthographicProjection(Camera* camera);
 	Matrix4 PerspectiveProjection(Camera* camera);
 	Matrix4 ViewportProjection(Camera* camera);
+	Matrix4 getCameraTransformMatrix(Camera* camera);
 	Vec4* getVector4(Vec3 vector);
+	Vec3* getVector3(Vec4 vector);
+	void modelTransformation(Matrix4 worldMatrix,Camera *camera);
+	void clipping(Vec3 *v0, Vec3 *v1, Camera* camera);
+	bool isVisible(float d,float num,float *tEnter,float *tLeave);
+	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
+	
 };
 
 #endif

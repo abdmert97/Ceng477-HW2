@@ -19,6 +19,121 @@
 using namespace tinyxml2;
 using namespace std;
 
+void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
+{
+	for (int i = 0 ; i < models.size();i++)
+	{
+		for (int j = 0 ; j < models[i]->numberOfTriangles;j++)
+		{
+
+		
+			Vec3 firstVertice =	*vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+
+
+			Vec4 first = multiplyMatrixWithVec4(worldMatrix, *getVector4(firstVertice));
+			Vec4 second = multiplyMatrixWithVec4(worldMatrix, *getVector4(secondVertice));
+			Vec4 third = multiplyMatrixWithVec4(worldMatrix, *getVector4(thirdVertice));
+			Vec3 *first1 = getVector3(first);
+			Vec3* second1 = getVector3(second);
+			Vec3* third1 = getVector3(third);
+			clipping(first1, second1, camera);
+			clipping(second1, third1, camera);
+			clipping(third1, first1, camera);
+		}
+	}
+}
+Vec3* Scene::getVector3(Vec4 vector)
+{
+	return new Vec3(vector.x, vector.y, vector.z, -1);
+}
+void Scene::clipping(Vec3 *v0, Vec3 *v1, Camera* camera)
+{
+	float *tEnter = new float;
+	float *tLeave = new float;
+	*tLeave = 1;
+	*tEnter = 0;
+	bool visible = false;
+
+	float dx = v1->x - v0->x;
+	float dy = v1->y - v0->y;
+	float dz = v1->z - v0->z;
+
+	float xmin = camera->left;
+	float xmax = camera->right;
+	float ymin = camera->bottom;
+	float ymax = camera->top;
+	float zmin = camera->near;
+	float zmax = camera->far;
+
+	visible = isVisible(dx, xmin -v0->x, tEnter, tLeave);
+	visible = isVisible(-dx, v0->x - xmax, tEnter, tLeave);
+
+	visible = isVisible(dy, ymin - v0->y, tEnter, tLeave);
+	visible = isVisible(-dy, v0->y - ymax, tEnter, tLeave);
+
+	visible = isVisible(dz, zmin - v0->z, tEnter, tLeave);
+	visible = isVisible(-dz, v0->z - zmax, tEnter, tLeave);
+	if(visible)
+	{
+		if(*tLeave<1)
+		{
+			v1->x = v0->x + dx * (*tLeave);
+			v1->y = v0->y + dy * (*tLeave);
+			v1->z = v0->z + dz * (*tLeave);
+		}
+		if (*tEnter < 1)
+		{
+			v0->x = v0->x + dx * (*tEnter);
+			v0->y = v0->y + dy * (*tEnter);
+			v0->z = v0->z + dz * (*tEnter);
+		}
+	}
+
+	
+}
+
+bool Scene::isVisible(float d, float num, float *tEnter, float *tLeave)
+{
+	float t = 0;
+	if(d>0)
+	{
+		t = num / d;
+	}
+	if(t> *tLeave)
+	{
+		return false;
+	}
+	if (t > * tEnter)
+	{
+		*tEnter = t;
+	}
+	else if (d < 0)
+	{
+		t = num / d;
+		if (t < *tEnter)
+		{
+			return false;
+		}
+		if (t < *tLeave)
+		{
+			*tLeave = t;
+		}
+	}
+	else if (num > 0)
+		return  false;
+	return  true;
+}
+
+
+Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
+{
+	Vec3 p = addVec3(v0, multiplyVec3WithScalar(subtractVec3(v0, v1), t));
+	return p;
+}
+
+
 /*
 	Transformations, clipping, culling, rasterization are done here.
 	You can define helper functions inside Scene class implementation.
@@ -40,28 +155,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	Matrix4 viewPort = ViewportProjection(camera);
 	Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPort,multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
 
-	for (int i = 0 ; i < models.size();i++)
-	{
-		for (int j = 0 ; j < models[i]->numberOfTriangles;j++)
-		{
-
-		
-			Vec3 firstVertice =	*vertices[models[i]->triangles[j].getFirstVertexId()-1];
-			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId()-1];
-			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId()-1];
-
-
-			Vec4 first = multiplyMatrixWithVec4(worldMatrix,*getVector4(firstVertice));
-			Vec4 second = multiplyMatrixWithVec4(worldMatrix, *getVector4(secondVertice));
-			Vec4 third = multiplyMatrixWithVec4(worldMatrix, *getVector4(thirdVertice));
-			int x = (int)first.x;
-			int y = (int)first.y;
-			cout <<first<< endl;
-			image[0][0] = *(new Color(0, 0, 0));
-			//image[(int)second.x][(int)second.y] = *(new Color(0, 0, 0));
-		//	image[(int)third.x][(int)third.y] = *(new Color(0, 0, 0));
-		}
-	}
+	modelTransformation(worldMatrix,camera);
 
 	
 }
@@ -73,7 +167,7 @@ Vec4 * Scene::getVector4(Vec3 vector)
 Matrix4 Scene::getCameraTransformMatrix(Camera* camera)
 {
 	Matrix4 cameraTranslate = getIdentityMatrix();
-	Vec4 * cameraPosition = new Vec4(camera->pos.x, camera->pos.y, camera->pos.z, 1, 0);
+	Vec4 *cameraPosition = new Vec4(camera->pos.x, camera->pos.y, camera->pos.z, 1, 0);
 	cameraTranslate.val[0][3] = -camera->pos.x;
 	cameraTranslate.val[1][3] = -camera->pos.y;
 	cameraTranslate.val[2][3] = -camera->pos.z;
@@ -101,10 +195,13 @@ Matrix4 Scene::OrthographicProjection(Camera* camera)
 	float xDistance = camera->right - camera->left;
 	float yDistance = camera->top - camera->bottom;
 	float zDistance = camera->far - camera->near;
-	
+	if(xDistance == 0 || yDistance == 0 ||zDistance ==0)
+	{
+		cout << "division by zero error" << endl;
+	}
 	projectionMatix.val[0][0] = 2/xDistance;
 	projectionMatix.val[1][1] = 2/yDistance;
-	projectionMatix.val[2][2] = 2/zDistance;
+	projectionMatix.val[2][2] = -2/zDistance;
 
 	projectionMatix.val[0][3] = -(camera->right+camera->left) / xDistance;
 	projectionMatix.val[1][3] = -(camera->top+camera->bottom) / yDistance;
@@ -124,8 +221,9 @@ Matrix4 Scene::PerspectiveProjection(Camera* camera)
 	projectionMatix.val[1][1] = two_n / yDistance;
 	projectionMatix.val[2][2] = -(camera->far + camera->near) / zDistance;
 
-	projectionMatix.val[0][2] = -(camera->right + camera->left) / xDistance;
-	projectionMatix.val[1][2] = -(camera->top + camera->bottom) / yDistance;
+	projectionMatix.val[0][2] = (camera->right + camera->left) / xDistance;
+	projectionMatix.val[1][2] = (camera->top + camera->bottom) / yDistance;
+	
 	projectionMatix.val[2][3] = -2*(camera->far * camera->near) / zDistance;
 	
 	projectionMatix.val[3][2] = -1;
