@@ -43,9 +43,11 @@ public:
 	int makeBetweenZeroAnd255(double value);
 	void writeImageToPPMFile(Camera* camera);
 	void convertPPMToPNG(string ppmFileName, int osType);
-	Matrix4 OrthographicProjection(Camera* camera);
-	Matrix4 PerspectiveProjection(Camera* camera);
-	Matrix4 ViewportProjection(Camera* camera);
+
+	// Implemented as hw
+	Matrix4 getOrthographicProjectionMatrix(Camera* camera);
+	Matrix4 getPerspectiveProjectionMatrix(Camera* camera);
+	Matrix4 getViewportProjectionMatrix(Camera* camera);
 	Matrix4 getCameraTransformMatrix(Camera* camera);
 	Vec4* getVector4(Vec3 vector);
 	Vec3* getVector3(Vec4 vector);
@@ -53,6 +55,11 @@ public:
 	void clipping(Vec3 *v0, Vec3 *v1, Camera* camera);
 	bool isVisible(float d,float num,float *tEnter,float *tLeave);
 	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
+	void rasterization(Camera* camera);
+	void transformation(Matrix4 transformationMatrix, Camera* camera);
+	void lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1);
+	void modelingTransformation();
+	Matrix4 getTranslationMatrix(Translation* translation);
 	
 };
 

@@ -19,6 +19,140 @@
 using namespace tinyxml2;
 using namespace std;
 
+
+void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1)
+{
+	int y = y_0;
+	int distance = 2 * (y_0 - y_1) + (x_1 - x_0);
+	Vec3* c_0v = new Vec3(c_0->r, c_0->g, c_0->b, 0);
+	cout << x_1 << " - " << y_1<<endl;
+	Vec3* c_1v = new Vec3(c_1->r, c_1->g, c_1->b, 0);
+	Vec3* c = new Vec3(*c_0v);
+	Vec3 d_c = addVec3(*c_1v, multiplyVec3WithScalar(*c_0v, -1));
+	for (int x = x_0; x < x_1; x++)
+	{
+		this->image[x][y] = Color(round(c->x), round(c->x), round(c->x));
+
+		if (distance < 0)
+		{
+			y += 1;
+			distance += 2 * ((y_0 - y_1) + (x_1 - x_0));
+		}
+		else
+		{
+			distance += 2 * (y_0 - y_1);
+		}
+		*c = addVec3(*c, d_c);
+	}
+}
+
+void Scene::rasterization(Camera* camera)
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+
+
+			Vec3 firstVertice = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+
+			// LINE RASTERIZATION
+
+			int x_0, y_0, x_1, y_1;
+			// vertice1 -> vertice2
+			x_0 = round(firstVertice.x);
+			y_0 = round(firstVertice.y);
+			x_1 = round(secondVertice.x);
+			y_1 = round(secondVertice.y);
+			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
+			{
+				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1>= 0)
+				{
+					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1]);
+				}
+			}
+
+			// vertice2 -> vertice3
+			x_0 = round(secondVertice.x);
+			y_0 = round(secondVertice.y);
+			x_1 = round(thirdVertice.x);
+			y_1 = round(thirdVertice.y);
+			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
+			{
+				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1 >= 0)
+				{
+					lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1]);
+				}
+			}
+			
+			// vertice3 -> vertice1
+			x_0 = round(thirdVertice.x);
+			y_0 = round(thirdVertice.y);
+			x_1 = round(firstVertice.x);
+			y_1 = round(firstVertice.y);
+			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
+			{
+				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1 >= 0)
+				{
+					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1]);
+				}
+			}
+
+			// TRIANGLE RASTERIZATION
+			// TODO: Implement
+		}
+	}
+}
+
+void Scene::modelingTransformation()
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTransformations; j++)
+		{
+			if (models[i]->transformationTypes[j] == 't')
+			{
+				cout << "Translating..." << endl;
+				Matrix4 translationMatrix = getTranslationMatrix(translations[models[i]->transformationIds[j]]);
+				for (int k = 0; k < models[i]->numberOfTriangles; k++)
+				{
+					Vec3 firstVertice = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+					Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+					Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+
+					Vec4 first = multiplyMatrixWithVec4(translationMatrix, *getVector4(firstVertice));
+					Vec4 second = multiplyMatrixWithVec4(translationMatrix, *getVector4(secondVertice));
+					Vec4 third = multiplyMatrixWithVec4(translationMatrix, *getVector4(thirdVertice));
+				}
+			}
+		}
+		
+	}
+}
+
+void Scene::transformation(Matrix4 transformationMatrix, Camera* camera)
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec3 firstVertice = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+
+
+			Vec4 first = multiplyMatrixWithVec4(transformationMatrix, *getVector4(firstVertice));
+			Vec4 second = multiplyMatrixWithVec4(transformationMatrix, *getVector4(secondVertice));
+			Vec4 third = multiplyMatrixWithVec4(transformationMatrix, *getVector4(thirdVertice));
+			
+			// TODO: set new vertices
+		}
+	}
+}
+
+
 void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
 {
 	for (int i = 0 ; i < models.size();i++)
@@ -35,7 +169,8 @@ void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
 			Vec4 first = multiplyMatrixWithVec4(worldMatrix, *getVector4(firstVertice));
 			Vec4 second = multiplyMatrixWithVec4(worldMatrix, *getVector4(secondVertice));
 			Vec4 third = multiplyMatrixWithVec4(worldMatrix, *getVector4(thirdVertice));
-			Vec3 *first1 = getVector3(first);
+
+			Vec3* first1 = getVector3(first);
 			Vec3* second1 = getVector3(second);
 			Vec3* third1 = getVector3(third);
 			clipping(first1, second1, camera);
@@ -145,17 +280,23 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	Matrix4 projectionMatrix;
 	if(projectionType == 0) // orthographic
 	{
-		projectionMatrix = OrthographicProjection(camera);
+		projectionMatrix = getOrthographicProjectionMatrix(camera);
 	}
 	else  // perspective
 	{
-		projectionMatrix = PerspectiveProjection(camera);
+		projectionMatrix = getPerspectiveProjectionMatrix(camera);
 	}
+	Matrix4 viewPortMatrix = getViewportProjectionMatrix(camera);
 
-	Matrix4 viewPort = ViewportProjection(camera);
-	Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPort,multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
 
-	modelTransformation(worldMatrix,camera);
+	modelingTransformation();
+	//transformation(cameraMatrix, camera);
+	//transformation(projectionMatrix, camera);
+	//transformation(viewPortMatrix, camera);
+
+	rasterization(camera);
+	//Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPortMatrix, multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
+	//modelTransformation(worldMatrix,camera);
 
 	
 }
@@ -189,12 +330,13 @@ Matrix4 Scene::getCameraTransformMatrix(Camera* camera)
 	return multiplyMatrixWithMatrix(cameraRotation, cameraTranslate);
 	
 }
-Matrix4 Scene::OrthographicProjection(Camera* camera)
+Matrix4 Scene::getOrthographicProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
 	float xDistance = camera->right - camera->left;
 	float yDistance = camera->top - camera->bottom;
 	float zDistance = camera->far - camera->near;
+	//TODO: Handle
 	if(xDistance == 0 || yDistance == 0 ||zDistance ==0)
 	{
 		cout << "division by zero error" << endl;
@@ -209,7 +351,7 @@ Matrix4 Scene::OrthographicProjection(Camera* camera)
 
 	return  projectionMatix;
 }
-Matrix4 Scene::PerspectiveProjection(Camera* camera)
+Matrix4 Scene::getPerspectiveProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
 	float xDistance = camera->right - camera->left;
@@ -230,7 +372,7 @@ Matrix4 Scene::PerspectiveProjection(Camera* camera)
 	projectionMatix.val[3][3] = 0;
 	return  projectionMatix;
 }
-Matrix4 Scene::ViewportProjection(Camera* camera)
+Matrix4 Scene::getViewportProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
 	projectionMatix.val[0][0] = camera->horRes / 2;
@@ -245,6 +387,17 @@ Matrix4 Scene::ViewportProjection(Camera* camera)
 	projectionMatix.val[3][3] = 0;
 
 	return projectionMatix;
+}
+
+Matrix4 Scene::getTranslationMatrix(Translation* translation)
+{
+	Matrix4 translationMatrix = getIdentityMatrix();
+
+	translationMatrix.val[0][3] = translation->tx;
+	translationMatrix.val[1][3] = translation->ty;
+	translationMatrix.val[2][3] = translation->tz;
+
+	return translationMatrix;
 }
 /*
 	Parses XML file
