@@ -78,3 +78,14 @@ x64/Release/HW2.iobj
 x64/Release/HW2.exe
 Release/Matrix4.obj
 x64/Release/HW2.tlog/link.write.1.tlog
+*.obj
+*.pdb
+*.ipch
+*.db
+*.suo
+*.tlog
+*.lastbuildstate
+*.idb
+*.log
+*.ilk
+*.exe
