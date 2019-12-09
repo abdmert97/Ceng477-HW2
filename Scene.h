@@ -35,6 +35,8 @@ public:
 	vector< Rotation* > rotations;
 	vector< Translation* > translations;
 	vector< Model* > models;
+	// Implemented as hw
+	vector < vector<Vec3*> > verticesAssembled;
 
 	Scene(const char *xmlPath);
 	
@@ -60,7 +62,8 @@ public:
 	void lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1);
 	void modelingTransformation();
 	Matrix4 getTranslationMatrix(Translation* translation);
-	
+	Matrix4 getScalingMatrix(Scaling* scaling);
+	void triangleRasterization(Camera* camera, int x_0, int y_0, int x_1, int y_1, int x_2, int y_2);
 };
 
 #endif
