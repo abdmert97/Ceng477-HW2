@@ -36,7 +36,7 @@ public:
 	vector< Translation* > translations;
 	vector< Model* > models;
 	// Implemented as hw
-	vector < vector<Vec3*> > verticesAssembled;
+	vector < vector<Vec4*> > verticesAssembled;
 
 	Scene(const char *xmlPath);
 	

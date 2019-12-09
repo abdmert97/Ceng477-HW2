@@ -98,9 +98,9 @@ void Scene::rasterization(Camera* camera)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
-			Vec3 firstVertice = *verticesAssembled[i][j * 3];
-			Vec3 secondVertice = *verticesAssembled[i][j * 3 + 1];
-			Vec3 thirdVertice = *verticesAssembled[i][j * 3 + 2];
+			Vec4 firstVertice = *verticesAssembled[i][j * 3];
+			Vec4 secondVertice = *verticesAssembled[i][j * 3 + 1];
+			Vec4 thirdVertice = *verticesAssembled[i][j * 3 + 2];
 
 			
 			// LINE RASTERIZATION
@@ -178,28 +178,28 @@ void Scene::modelingTransformation()
 				Matrix4 translationMatrix = getTranslationMatrix(translations[models[i]->transformationIds[j] - 1]);
 				for (int k = 0; k < models[i]->numberOfTriangles; k++)
 				{
-					Vec3 firstVertice = *verticesAssembled[i][k * 3];
-					Vec3 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec3 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
 					/*
 					cout << "############" << endl;
 					cout << *verticesAssembled[i][k * 3] << endl;
 					cout << *verticesAssembled[i][k * 3 + 1] << endl;
 					cout << *verticesAssembled[i][k * 3 + 2] << endl;
 					*/
-					Vec4 first = multiplyMatrixWithVec4(translationMatrix, *getVector4(firstVertice));
-					Vec4 second = multiplyMatrixWithVec4(translationMatrix, *getVector4(secondVertice));
-					Vec4 third = multiplyMatrixWithVec4(translationMatrix, *getVector4(thirdVertice));
-					*verticesAssembled[i][k * 3] = *getVector3(first);
-					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
-					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
-					/*
+					Vec4 first = multiplyMatrixWithVec4(translationMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(translationMatrix, secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(translationMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] =third;
+					
 					cout << "############" << endl;
 					cout << *verticesAssembled[i][k * 3] << endl;
 					cout << *verticesAssembled[i][k * 3 + 1] << endl;
 					cout << *verticesAssembled[i][k * 3 + 2] << endl;
 					cout << "^^^^^^^^^^^^^^" << endl;
-					*/
+					
 				}
 			}
 			else if (models[i]->transformationTypes[j] == 's')
@@ -209,16 +209,16 @@ void Scene::modelingTransformation()
 				cout << scalingMatrix << endl;
 				for (int k = 0; k < models[i]->numberOfTriangles; k++)
 				{
-					Vec3 firstVertice = *verticesAssembled[i][k * 3];
-					Vec3 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec3 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
 
-					Vec4 first = multiplyMatrixWithVec4(scalingMatrix, *getVector4(firstVertice));
-					Vec4 second = multiplyMatrixWithVec4(scalingMatrix, *getVector4(secondVertice));
-					Vec4 third = multiplyMatrixWithVec4(scalingMatrix, *getVector4(thirdVertice));
-					*verticesAssembled[i][k * 3] = *getVector3(first);
-					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
-					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
+					Vec4 first = multiplyMatrixWithVec4(scalingMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(scalingMatrix,secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(scalingMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] = third;
 				}
 			}
 			else if (models[i]->transformationTypes[j] == 'r')
@@ -228,16 +228,16 @@ void Scene::modelingTransformation()
 				cout << rotationMatrix << endl;
 				for (int k = 0; k < models[i]->numberOfTriangles; k++)
 				{
-					Vec3 firstVertice = *verticesAssembled[i][k * 3];
-					Vec3 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec3 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
 
-					Vec4 first = multiplyMatrixWithVec4(rotationMatrix, *getVector4(firstVertice));
-					Vec4 second = multiplyMatrixWithVec4(rotationMatrix, *getVector4(secondVertice));
-					Vec4 third = multiplyMatrixWithVec4(rotationMatrix, *getVector4(thirdVertice));
-					*verticesAssembled[i][k * 3] = *getVector3(first);
-					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
-					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
+					Vec4 first = multiplyMatrixWithVec4(rotationMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(rotationMatrix, secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(rotationMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] = third;
 				}
 			}
 		}
@@ -251,18 +251,18 @@ void Scene::transformation(Matrix4 transformationMatrix, Camera* camera)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
-			Vec3 firstVertice = *verticesAssembled[i][j * 3];
-			Vec3 secondVertice = *verticesAssembled[i][j * 3 + 1];
-			Vec3 thirdVertice = *verticesAssembled[i][j * 3 + 2];
+			Vec4 firstVertice = *verticesAssembled[i][j * 3];
+			Vec4 secondVertice = *verticesAssembled[i][j * 3 + 1];
+			Vec4 thirdVertice = *verticesAssembled[i][j * 3 + 2];
 
 
-			Vec4 first = multiplyMatrixWithVec4(transformationMatrix, *getVector4(firstVertice));
-			Vec4 second = multiplyMatrixWithVec4(transformationMatrix, *getVector4(secondVertice));
-			Vec4 third = multiplyMatrixWithVec4(transformationMatrix, *getVector4(thirdVertice));
+			Vec4 first = multiplyMatrixWithVec4(transformationMatrix, firstVertice);
+			Vec4 second = multiplyMatrixWithVec4(transformationMatrix,secondVertice);
+			Vec4 third = multiplyMatrixWithVec4(transformationMatrix, thirdVertice);
 
-			*verticesAssembled[i][j * 3] = *getVector3(first);
-			*verticesAssembled[i][j * 3 + 1] = *getVector3(second);
-			*verticesAssembled[i][j * 3 + 2] = *getVector3(third);
+			*verticesAssembled[i][j * 3] = first;
+			*verticesAssembled[i][j * 3 + 1] = second;
+			*verticesAssembled[i][j * 3 + 2] =third;
 		}
 	}
 }
@@ -391,18 +391,21 @@ Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	verticesAssembled.clear();
+	
 	for (int i = 0; i < models.size(); i++)
 	{
-		vector<Vec3*> modelVertices;
+		vector<Vec4*> modelVertices;
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
 			//Vec3* firstVertice = new Vec3(*vertices[models[i]->triangles[j].getFirstVertexId() - 1]);
 			//Vec3* secondVertice = new Vec3(*vertices[models[i]->triangles[j].getSecondVertexId() - 1]);
 			//Vec3* thirdVertice = new Vec3(*vertices[models[i]->triangles[j].getThirdVertexId() - 1]);
-
-			modelVertices.push_back(new Vec3(*vertices[models[i]->triangles[j].getFirstVertexId() - 1]));
-			modelVertices.push_back(new Vec3(*vertices[models[i]->triangles[j].getSecondVertexId() - 1]));
-			modelVertices.push_back(new Vec3(*vertices[models[i]->triangles[j].getThirdVertexId() - 1]));
+			Vec3 v1 = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+			Vec3 v2 = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+			Vec3 v3 = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+			modelVertices.push_back(new Vec4(v1.x,v1.y,v1.z,1,v1.colorId));
+			modelVertices.push_back(new Vec4(v2.x, v2.y, v2.z, 1, v2.colorId));
+			modelVertices.push_back(new Vec4(v3.x, v3.y, v3.z, 1, v3.colorId));
 		}
 
 		verticesAssembled.push_back(modelVertices);
@@ -429,9 +432,9 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
-			cout << "1: " << *verticesAssembled[i][j * 3]<<endl;
-			cout << "2: " << *verticesAssembled[i][j * 3 + 1] << endl;
-			cout << "3: " << *verticesAssembled[i][j * 3 + 2] << endl;
+		//	cout << "1: " << *verticesAssembled[i][j * 3]<<endl;
+		//	cout << "2: " << *verticesAssembled[i][j * 3 + 1] << endl;
+		//	cout << "3: " << *verticesAssembled[i][j * 3 + 2] << endl;
 		}
 
 	}
