@@ -63,7 +63,11 @@ public:
 	void modelingTransformation();
 	Matrix4 getTranslationMatrix(Translation* translation);
 	Matrix4 getScalingMatrix(Scaling* scaling);
-	void triangleRasterization(Camera* camera, int x_0, int y_0, int x_1, int y_1, int x_2, int y_2);
+	void triangleRasterization(Camera* camera,
+		int x_0, int y_0, Color* c_0,
+		int x_1, int y_1, Color* c_1,
+		int x_2, int y_2, Color* c_2);
+	Matrix4 getRotationMatrix(Rotation* rotation);
 };
 
 #endif

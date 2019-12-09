@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
@@ -16,6 +17,7 @@
 #include "Vec3.h"
 #include "tinyxml2.h"
 #include "Helpers.h"
+#include <algorithm>
 
 using namespace tinyxml2;
 using namespace std;
@@ -27,7 +29,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	int y = y_0;
 	int d = 2 * (y_0 - y_1) + (x_1 - x_0);
 	Vec3* c_0v = new Vec3(c_0->r, c_0->g, c_0->b, -1);
-	cout << x_1 << " - " << y_1<<endl;
+	//cout << x_1 << " - " << y_1<<endl;
 	Vec3* c_1v = new Vec3(c_1->r, c_1->g, c_1->b, -1);
 	Vec3* c = new Vec3(*c_0v);
 	Vec3* d_c = new Vec3(255, 255, 255, -1);
@@ -37,8 +39,8 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	}
 	for (int x = x_0; x <= x_1; x++)
 	{
-		//this->image[x][y] = Color(round(c->x), round(c->y), round(c->z));
-		this->image[x][y] = Color(255, 255, 255);
+		this->image[x][y] = Color(round(c->x), round(c->y), round(c->z));
+		//this->image[x][y] = Color(255, 255, 255);
 		if (d < 0)
 		{
 			y += 1;
@@ -52,25 +54,39 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	}
 }
 
-void Scene::triangleRasterization(Camera* camera, int x_0, int y_0, int x_1, int y_1, int x_2, int y_2)
+void Scene::triangleRasterization(Camera* camera, 
+	int x_0, int y_0, Color* c_0,
+	int x_1, int y_1, Color* c_1,
+	int x_2, int y_2, Color* c_2)
 {
-	for(int y = 0; y < camera->verRes; y++)
+	int x_min = min(min(x_0, x_1), x_2);
+	int y_min = min(min(y_0, y_1), y_2);
+
+	int x_max = max(max(x_0, x_1), x_2);
+	int y_max = max(max(y_0, y_1), y_2);
+	
+	for(int y = y_min; y <= y_max; y++)
 	{
-		for(int x = 0; x < camera->horRes; x++)
+		for(int x = x_min; x <= x_max; x++)
 		{
-			int f_01_xy = x * (y_0 - y_1) + y * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
-			int f_12_xy = x * (y_1 - y_2) + y * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
-			int f_20_xy = x * (y_2 - y_0) + y * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
-			int f_01_x2y2 = x_2 * (y_0 - y_1) + y_2 * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
-			int f_12_x0y0 = x_0 * (y_1 - y_2) + y_0 * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
-			int f_20_x1y1 = x_1 * (y_2 - y_0) + y_1 * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
-			
-			int alpha = f_12_xy / f_12_x0y0;
-			int beta = f_20_xy / f_20_x1y1;
-			int theta = f_01_xy / f_01_x2y2;
-			if(alpha >= 0 && beta >= 0 && theta >= 0)
-			{
-				this->image[x][y] = Color(255, 255, 255);
+			if (x >= 0 && x < camera->horRes && y >= 0 && y < camera->verRes) {
+				double f_01_xy = x * (y_0 - y_1) + y * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
+				double f_12_xy = x * (y_1 - y_2) + y * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
+				double f_20_xy = x * (y_2 - y_0) + y * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
+				double f_01_x2y2 = x_2 * (y_0 - y_1) + y_2 * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
+				double f_12_x0y0 = x_0 * (y_1 - y_2) + y_0 * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
+				double f_20_x1y1 = x_1 * (y_2 - y_0) + y_1 * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
+
+				double alpha = f_12_xy / f_12_x0y0;
+				double beta = f_20_xy / f_20_x1y1;
+				double theta = f_01_xy / f_01_x2y2;
+				if (alpha >= 0 && beta >= 0 && theta >= 0)
+				{
+					double r = alpha * c_0->r + beta * c_1->r + theta * c_2->r;
+					double g = alpha * c_0->g + beta * c_1->g + theta * c_2->g;
+					double b = alpha * c_0->b + beta * c_1->b + theta * c_2->b;
+					this->image[x][y] = Color(r, g, b);
+				}
 			}
 		}
 	}
@@ -102,8 +118,8 @@ void Scene::rasterization(Camera* camera)
 			y_0 = round(firstVertice.y);
 			x_1 = round(secondVertice.x);
 			y_1 = round(secondVertice.y);
-
-			cout << x_1 << endl;
+			/*
+			cout << "x1: "<< x_1 << endl;
 			cout << "------" << endl;
 			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
 			{
@@ -138,12 +154,17 @@ void Scene::rasterization(Camera* camera)
 					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1]);
 				}
 			}
-			
+			*/
 			// TRIANGLE RASTERIZATION
-			//triangleRasterization(camera, firstVertice.x, firstVertice.y, secondVertice.x, secondVertice.y, thirdVertice.x, thirdVertice.y);
+			triangleRasterization(camera, 
+				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
+				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
+				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
 		}
 	}
 }
+
+
 
 void Scene::modelingTransformation()
 {
@@ -160,21 +181,25 @@ void Scene::modelingTransformation()
 					Vec3 firstVertice = *verticesAssembled[i][k * 3];
 					Vec3 secondVertice = *verticesAssembled[i][k * 3 + 1];
 					Vec3 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+					/*
 					cout << "############" << endl;
 					cout << *verticesAssembled[i][k * 3] << endl;
 					cout << *verticesAssembled[i][k * 3 + 1] << endl;
 					cout << *verticesAssembled[i][k * 3 + 2] << endl;
+					*/
 					Vec4 first = multiplyMatrixWithVec4(translationMatrix, *getVector4(firstVertice));
 					Vec4 second = multiplyMatrixWithVec4(translationMatrix, *getVector4(secondVertice));
 					Vec4 third = multiplyMatrixWithVec4(translationMatrix, *getVector4(thirdVertice));
 					*verticesAssembled[i][k * 3] = *getVector3(first);
 					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
 					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
+					/*
 					cout << "############" << endl;
 					cout << *verticesAssembled[i][k * 3] << endl;
 					cout << *verticesAssembled[i][k * 3 + 1] << endl;
 					cout << *verticesAssembled[i][k * 3 + 2] << endl;
 					cout << "^^^^^^^^^^^^^^" << endl;
+					*/
 				}
 			}
 			else if (models[i]->transformationTypes[j] == 's')
@@ -191,6 +216,25 @@ void Scene::modelingTransformation()
 					Vec4 first = multiplyMatrixWithVec4(scalingMatrix, *getVector4(firstVertice));
 					Vec4 second = multiplyMatrixWithVec4(scalingMatrix, *getVector4(secondVertice));
 					Vec4 third = multiplyMatrixWithVec4(scalingMatrix, *getVector4(thirdVertice));
+					*verticesAssembled[i][k * 3] = *getVector3(first);
+					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
+					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
+				}
+			}
+			else if (models[i]->transformationTypes[j] == 'r')
+			{
+				cout << "Rotating..." << endl;
+				Matrix4 rotationMatrix = getRotationMatrix(rotations[models[i]->transformationIds[j] - 1]);
+				cout << rotationMatrix << endl;
+				for (int k = 0; k < models[i]->numberOfTriangles; k++)
+				{
+					Vec3 firstVertice = *verticesAssembled[i][k * 3];
+					Vec3 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec3 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+
+					Vec4 first = multiplyMatrixWithVec4(rotationMatrix, *getVector4(firstVertice));
+					Vec4 second = multiplyMatrixWithVec4(rotationMatrix, *getVector4(secondVertice));
+					Vec4 third = multiplyMatrixWithVec4(rotationMatrix, *getVector4(thirdVertice));
 					*verticesAssembled[i][k * 3] = *getVector3(first);
 					*verticesAssembled[i][k * 3 + 1] = *getVector3(second);
 					*verticesAssembled[i][k * 3 + 2] = *getVector3(third);
@@ -346,7 +390,7 @@ Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
 */
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
-	
+	verticesAssembled.clear();
 	for (int i = 0; i < models.size(); i++)
 	{
 		vector<Vec3*> modelVertices;
@@ -381,7 +425,16 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	transformation(cameraMatrix, camera);
 	transformation(projectionMatrix, camera);
 	transformation(viewPortMatrix, camera);
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			cout << "1: " << *verticesAssembled[i][j * 3]<<endl;
+			cout << "2: " << *verticesAssembled[i][j * 3 + 1] << endl;
+			cout << "3: " << *verticesAssembled[i][j * 3 + 2] << endl;
+		}
 
+	}
 	rasterization(camera);
 	//Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPortMatrix, multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
 	//modelTransformation(worldMatrix,camera);
@@ -424,11 +477,7 @@ Matrix4 Scene::getOrthographicProjectionMatrix(Camera* camera)
 	float xDistance = camera->right - camera->left;
 	float yDistance = camera->top - camera->bottom;
 	float zDistance = camera->far - camera->near;
-	//TODO: Handle
-	if(xDistance == 0 || yDistance == 0 ||zDistance ==0)
-	{
-		cout << "division by zero error" << endl;
-	}
+	
 	projectionMatix.val[0][0] = 2/xDistance;
 	projectionMatix.val[1][1] = 2/yDistance;
 	projectionMatix.val[2][2] = -2/zDistance;
@@ -498,6 +547,31 @@ Matrix4 Scene::getScalingMatrix(Scaling* scaling)
 
 	return scalingMatrix;
 }
+
+Matrix4 Scene::getRotationMatrix(Rotation* rotation)
+{
+	double cost = cos(rotation->angle * M_PI / 180);
+	double sint = sin(rotation->angle * M_PI / 180);
+	Vec3* u = new Vec3(rotation->ux, rotation->uy, rotation->uz, -1);
+	*u = normalizeVec3(*u);
+	cout << "u---> " << *u << endl;
+	Matrix4 rotationMatrix = getIdentityMatrix();
+
+	rotationMatrix.val[0][0] = cost + u->x * u->x * (1 - cost);
+	rotationMatrix.val[0][1] = u->x * u->y * (1 - cost) - u->z * sint;
+	rotationMatrix.val[0][2] = u->x * u->z * (1 - cost) + u->y * sint;
+
+	rotationMatrix.val[1][0] = u->y * u->x * (1 - cost) + u->z * sint;
+	rotationMatrix.val[1][1] = cost + u->y * u->y * (1 - cost);
+	rotationMatrix.val[1][2] = u->y * u->z * (1 - cost) - u->x * sint;
+
+	rotationMatrix.val[2][0] = u->z * u->x * (1 - cost) - u->y * sint;
+	rotationMatrix.val[2][1] = u->z * u->y * (1 - cost) + u->x * sint;
+	rotationMatrix.val[2][2] = cost + u->z * u->z * (1 - cost);
+
+	return rotationMatrix;
+}
+
 /*
 	Parses XML file
 */
