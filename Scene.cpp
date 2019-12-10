@@ -118,9 +118,9 @@ void Scene::rasterization(Camera* camera)
 			y_0 = round(firstVertice.y);
 			x_1 = round(secondVertice.x);
 			y_1 = round(secondVertice.y);
-			/*
-			cout << "x1: "<< x_1 << endl;
-			cout << "------" << endl;
+			
+			//cout << "x1: "<< x_1 << endl;
+		//	cout << "------" << endl;
 			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
 			{
 				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1>= 0)
@@ -154,17 +154,14 @@ void Scene::rasterization(Camera* camera)
 					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1]);
 				}
 			}
-			*/
+			
 			// TRIANGLE RASTERIZATION
-			if(firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)
+			/*if(firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)
 				triangleRasterization(camera, 
 				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
 				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
 				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
-			else
-			{
-				cout << firstVertice.t << secondVertice.t << thirdVertice.t << endl;
-			}
+	*/
 		}
 	}
 }
