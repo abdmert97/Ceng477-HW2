@@ -56,7 +56,7 @@ public:
 	Vec4* getVector4(Vec3 vector);
 	Vec3* getVector3(Vec4 vector);
 	void modelTransformation(Matrix4 worldMatrix,Camera *camera);
-	void clipping(Vec4 *v0, Vec4 *v1, Camera* camera);
+	void clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera);
 	bool isVisible(float d,float num,float *tEnter,float *tLeave);
 	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
 	void rasterization(Camera* camera);

@@ -385,10 +385,8 @@ Vec3* Scene::getVector3(Vec4 vector)
 {
 	return new Vec3(vector.x, vector.y, vector.z, vector.colorId);
 }
-void Scene::clipping(Vec4 *v0, Vec4 *v1, Camera* camera)
+void Scene::clipping(Vec4 *v0, Vec4 *v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera)
 {
-	Vec4* v0_clipped = new Vec4(*v0);
-	Vec4* v1_clipped = new Vec4(*v1);
 	float *tEnter = new float;
 	float *tLeave = new float;
 	*tLeave = 1;
@@ -421,17 +419,16 @@ void Scene::clipping(Vec4 *v0, Vec4 *v1, Camera* camera)
 							cout << "te: " << *tEnter << endl;
 							if (*tLeave < 1)
 							{
-								v1->x = v0->x + dx * (*tLeave);
-								v1->y = v0->y + dy * (*tLeave);
-								v1->z = v0->z + dz * (*tLeave);
+								v1_clipped->x = v0->x + dx * (*tLeave);
+								v1_clipped->y = v0->y + dy * (*tLeave);
+								v1_clipped->z = v0->z + dz * (*tLeave);
 							}
 							if (*tEnter > 0)
 							{
-								v0->x = v0->x + dx * (*tEnter);
-								v0->y = v0->y + dy * (*tEnter);
-								v0->z = v0->z + dz * (*tEnter);
+								v0_clipped->x = v0->x + dx * (*tEnter);
+								v0_clipped->y = v0->y + dy * (*tEnter);
+								v0_clipped->z = v0->z + dz * (*tEnter);
 							}
-							return;
 						}
 					}
 				}
@@ -445,9 +442,14 @@ void Scene::clippingModels(Camera* camera)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
-			Vec4 *v1 = verticesAssembled[i][j * 3];
-			Vec4 *v2 = verticesAssembled[i][j * 3 + 1];
-			Vec4 *v3 = verticesAssembled[i][j * 3 + 2];
+			Vec4 *v0 = verticesAssembled[i][j * 3];
+			Vec4 *v1 = verticesAssembled[i][j * 3 + 1];
+			Vec4 *v2 = verticesAssembled[i][j * 3 + 2];
+			
+			v0->x /= v0->t;
+			v0->y /= v0->t;
+			v0->z /= v0->t;
+			v0->t /= v0->t;
 			
 			v1->x /= v1->t;
 			v1->y /= v1->t;
@@ -458,16 +460,20 @@ void Scene::clippingModels(Camera* camera)
 			v2->y /= v2->t;
 			v2->z /= v2->t;
 			v2->t /= v2->t;
-			
-			v3->x /= v3->t;
-			v3->y /= v3->t;
-			v3->z /= v3->t;
-			v3->t /= v3->t;
-			
-			clipping(v1, v2,camera);
-			clipping(v2, v3, camera);
-			clipping(v3, v1, camera);
 
+
+			Vec4* v0_c1 = new Vec4(*v0);
+			Vec4* v1_c1 = new Vec4(*v1);
+			Vec4* v2_c1 = new Vec4(*v2);
+			Vec4* v0_c2 = new Vec4(*v0);
+			Vec4* v1_c2 = new Vec4(*v1);
+			Vec4* v2_c2 = new Vec4(*v2);
+			
+			clipping(v0, v1, v0_c1, v1_c1, camera);
+			clipping(v1, v2, v1_c2, v2_c1, camera);
+			clipping(v2, v0, v2_c2, v0_c2, camera);
+
+			
 			
 
 		}
