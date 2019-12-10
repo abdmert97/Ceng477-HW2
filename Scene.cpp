@@ -44,7 +44,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 		for(; x< max(x_0, x_1); x++)
 		{
 			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
-			this->image[x][y] = Color(0, 0, 0);
+				this->image[x][y] = Color(0, 0, 0);
 			if(d <= 0)
 			{
 				d += 2 * (abs(dy));
@@ -217,41 +217,8 @@ void Scene::rasterization(Camera* camera)
 
 			if(models[i]->type == 0)
 			{
-				int x_0, y_0, x_1, y_1;
-				// vertice1 -> vertice2
 				
-					
-				if (firstVertice.t == 1 && secondVertice.t == 1)
-				{
-					x_0 = round(firstVertice.x);
-					y_0 = round(firstVertice.y);
-					x_1 = round(secondVertice.x);
-					y_1 = round(secondVertice.y);
-					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
-				}
 				
-
-				// vertice2 -> vertice3
-				
-				if (firstVertice.t == 1 && secondVertice.t == 1)
-				{
-					x_0 = round(secondVertice.x);
-					y_0 = round(secondVertice.y);
-					x_1 = round(thirdVertice.x);
-					y_1 = round(thirdVertice.y);
-					lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1], camera);
-				}
-
-				// vertice3 -> vertice1
-				
-				if (firstVertice.t == 1 && secondVertice.t == 1)
-				{
-					x_0 = round(thirdVertice.x);
-					y_0 = round(thirdVertice.y);
-					x_1 = round(firstVertice.x);
-					y_1 = round(firstVertice.y);
-					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
-				}
 			}
 			else
 			{
@@ -267,16 +234,12 @@ void Scene::rasterization(Camera* camera)
 			
 		}
 	}
-	if(models.size()<verticesAssembled.size())
+	
+	for (int i = 0; i < newVertices.size()-1; i+=2)
 	{
-		for(int i = models.size(); i < verticesAssembled.size();i++)
-		{
-		//	cout << i << " i "<< endl;
-			for (int j = 0; j < verticesAssembled[i].size()-1; j+=2)
-			{
 			//	cout << j << " j " << endl;
-				Vec4 firstVertice = *verticesAssembled[i][j];
-				Vec4 secondVertice = *verticesAssembled[i][j + 1];
+		Vec4 firstVertice = *newVertices[i];
+		Vec4 secondVertice = *newVertices[i+1];
 				int x_0, y_0, x_1, y_1;
 				if (firstVertice.t == 1 && secondVertice.t == 1)
 				{
@@ -286,11 +249,12 @@ void Scene::rasterization(Camera* camera)
 					y_1 = round(secondVertice.y);
 					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
 				}
-			}
-		}
-		
+
 	}
+		
+		
 }
+
 
 
 
@@ -393,7 +357,14 @@ void Scene::transformation(Matrix4 transformationMatrix, Camera* camera)
 			*verticesAssembled[i][j * 3 + 2] =third;
 		}
 	}
+
+		for (int i =0; i<newVertices.size(); i++)
+		{
+			*newVertices[i] = multiplyMatrixWithVec4(transformationMatrix, *newVertices[i]);
+		}
+	
 }
+
 
 
 void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
@@ -442,39 +413,40 @@ void Scene::clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Cam
 	float zmin = -1;
 	float zmax = 1;
 
-	if(isVisible(dx, xmin - v0->x, tEnter, tLeave))
+	if (isVisible(dx, xmin - v0->x, tEnter, tLeave))
 	{
-		if(isVisible(-dx, v0->x - xmax, tEnter, tLeave))
+		if (isVisible(-dx, v0->x - xmax, tEnter, tLeave))
 		{
-			if(isVisible(dy, ymin - v0->y, tEnter, tLeave))
+			if (isVisible(dy, ymin - v0->y, tEnter, tLeave))
 			{
-				if(isVisible(-dy, v0->y - ymax, tEnter, tLeave))
+				if (isVisible(-dy, v0->y - ymax, tEnter, tLeave))
 				{
-					if(isVisible(dz, zmin - v0->z, tEnter, tLeave))
+					if (isVisible(dz, zmin - v0->z, tEnter, tLeave))
 					{
-						if(isVisible(-dz, v0->z - zmax, tEnter, tLeave))
+						if (isVisible(-dz, v0->z - zmax, tEnter, tLeave))
 						{
-							
 							if (*tLeave < 1)
 							{
-								v1_clipped->t = 2;
 								v1_clipped->x = v0->x + dx * (*tLeave);
 								v1_clipped->y = v0->y + dy * (*tLeave);
 								v1_clipped->z = v0->z + dz * (*tLeave);
 							}
 							if (*tEnter > 0)
 							{
-								v0_clipped->t = 2;
 								v0_clipped->x = v0->x + dx * (*tEnter);
 								v0_clipped->y = v0->y + dy * (*tEnter);
 								v0_clipped->z = v0->z + dz * (*tEnter);
 							}
 						}
+						
 					}
+					
 				}
 			}
+			
 		}
 	}
+
 }
 void Scene::clippingModels(Camera* camera)
 {
@@ -513,83 +485,20 @@ void Scene::clippingModels(Camera* camera)
 				clipping(v1, v2, v1_c2, v2_c2, camera);
 				clipping(v2, v0, v2_c3, v0_c3, camera);
 			
-				vector<Vec4*> newVertices;
-				if(v0_c1->t == 2)
-				{
-					v0->t = -1;
-					v0_c1->t = 1;
-					newVertices.push_back(v0_c1);
-
-				}
-				else
-				{
-					Vec4* v0x = new Vec4(*v0);
-					v0x->t = 1;
-					newVertices.push_back(v0x);
-				}
-				if (v1_c1->t == 2)
-				{	 
-					v1->t = -1;
-					v1_c1->t = 1;
-					newVertices.push_back(v1_c1);
-				}
-				else
-				{
-					Vec4* v1x = new Vec4(*v1);
-					v1x->t = 1;
-					newVertices.push_back(v1x);
-				}
-				if (v1_c2->t == 2)
-				{
-					v1->t = -1;
-					v1_c2->t = 1;
-					newVertices.push_back(v1_c2);
-				}
-				else
-				{
-					Vec4* v1x = new Vec4(*v1);
-					v1x->t = 1;
-					newVertices.push_back(v1x);
-				}
-				if (v2_c2->t == 2)
-				{	 
-					v2->t = -1;
-					v2_c2->t = 1;
-					newVertices.push_back(v2_c2);
-				}
-				else
-				{
-					Vec4* v2x = new Vec4(*v2);
-					v2x->t = 1;
-					newVertices.push_back(v2x);
-				}
-				if (v2_c3->t == 2)
-				{
-					v2->t = -1;
-					v2_c3->t = 1;
-					newVertices.push_back(v2_c3);
-				}
-				else
-				{
-					Vec4* v2x = new Vec4(*v2);
-					v2x->t = 1;
-					newVertices.push_back(v2x);
-				}
-				if (v0_c3->t == 2)
-				{
-					v0->t = -1;
-					v0_c3->t = 1;
-					newVertices.push_back(v0_c3);
-				}
-				else
-				{
-					Vec4* v0x = new Vec4(*v0);
-					v0x->t = 1;
-					newVertices.push_back(v0x);
-				}
 				
 			
-				verticesAssembled.push_back(newVertices);
+			    v0->t = -1;
+			   v1->t = -1;
+			    v2->t = -1;
+				
+			    newVertices.push_back(v0_c1);
+			    newVertices.push_back(v1_c1);
+			    newVertices.push_back(v1_c2);
+			    newVertices.push_back(v2_c2);
+			    newVertices.push_back(v2_c3);
+			    newVertices.push_back(v0_c3);
+			    
+
 			}
 		}
 
@@ -680,6 +589,7 @@ Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
 */
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
+	newVertices.clear();
 	verticesAssembled.clear();
 	
 	for (int i = 0; i < models.size(); i++)

@@ -26,7 +26,7 @@ public:
 	Color backgroundColor;
 	bool cullingEnabled;
 	int projectionType;
-	
+	vector<Vec4*> newVertices;
 	vector< vector<Color> > image;
 	vector< Camera* > cameras;
 	vector< Vec3* > vertices;
