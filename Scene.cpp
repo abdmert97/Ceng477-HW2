@@ -359,18 +359,22 @@ void Scene::clippingModels(Camera* camera)
 			v1->x /= v1->t;
 			v1->y /= v1->t;
 			v1->z /= v1->t;
+			v1->t /= v1->t;
 			
 			v2->x /= v2->t;
 			v2->y /= v2->t;
 			v2->z /= v2->t;
+			v2->t /= v2->t;
 			
 			v3->x /= v3->t;
 			v3->y /= v3->t;
 			v3->z /= v3->t;
+			v3->t /= v3->t;
 			
 			clipping(v1, v2,camera);
 			clipping(v2, v3, camera);
 			clipping(v3, v1, camera);
+
 		}
 
 	}
@@ -499,7 +503,8 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	transformation(projectionMatrix, camera);
 
 	clippingModels(camera);
-	//backfaceCulling(camera);	
+	if(cullingEnabled)
+		backfaceCulling(camera);	
 	
 	transformation(viewPortMatrix, camera);
 	for (int i = 0; i < models.size(); i++)
