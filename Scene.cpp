@@ -69,7 +69,7 @@ void Scene::triangleRasterization(Camera* camera,
 	{
 		for(int x = x_min; x <= x_max; x++)
 		{
-			if (x >= 0 && x < camera->horRes && y >= 0 && y < camera->verRes) {
+		
 				double f_01_xy = x * (y_0 - y_1) + y * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
 				double f_12_xy = x * (y_1 - y_2) + y * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
 				double f_20_xy = x * (y_2 - y_0) + y * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
@@ -87,7 +87,7 @@ void Scene::triangleRasterization(Camera* camera,
 					double b = alpha * c_0->b + beta * c_1->b + theta * c_2->b;
 					this->image[x][y] = Color(r, g, b);
 				}
-			}
+			
 		}
 	}
 }
@@ -503,7 +503,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	transformation(projectionMatrix, camera);
 
 	clippingModels(camera);
-	if(cullingEnabled)
+	if(!cullingEnabled)
 		backfaceCulling(camera);	
 	
 	transformation(viewPortMatrix, camera);
