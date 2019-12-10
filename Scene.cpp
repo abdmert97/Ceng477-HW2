@@ -29,7 +29,6 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	int y = y_0;
 	int d = 2 * (y_0 - y_1) + (x_1 - x_0);
 	Vec3* c_0v = new Vec3(c_0->r, c_0->g, c_0->b, -1);
-	//cout << x_1 << " - " << y_1<<endl;
 	Vec3* c_1v = new Vec3(c_1->r, c_1->g, c_1->b, -1);
 	Vec3* c = new Vec3(*c_0v);
 	Vec3* d_c = new Vec3(255, 255, 255, -1);
@@ -59,6 +58,7 @@ void Scene::triangleRasterization(Camera* camera,
 	int x_1, int y_1, Color* c_1,
 	int x_2, int y_2, Color* c_2)
 {
+	
 	int x_min = min(min(x_0, x_1), x_2);
 	int y_min = min(min(y_0, y_1), y_2);
 
@@ -85,6 +85,7 @@ void Scene::triangleRasterization(Camera* camera,
 					double r = alpha * c_0->r + beta * c_1->r + theta * c_2->r;
 					double g = alpha * c_0->g + beta * c_1->g + theta * c_2->g;
 					double b = alpha * c_0->b + beta * c_1->b + theta * c_2->b;
+					if(x>=0 && x < camera->horRes && y >= 0 && y < camera->horRes)
 					this->image[x][y] = Color(r, g, b);
 				}
 			
@@ -107,20 +108,11 @@ void Scene::rasterization(Camera* camera)
 
 			int x_0, y_0, x_1, y_1;
 			// vertice1 -> vertice2
-			/*
-			cout << "#########" << endl;
-			cout << firstVertice << endl;
-			cout << secondVertice << endl;
-			cout << thirdVertice << endl;
-			cout << "^^^^^^^^^^" << endl;
-			*/
 			x_0 = round(firstVertice.x);
 			y_0 = round(firstVertice.y);
 			x_1 = round(secondVertice.x);
 			y_1 = round(secondVertice.y);
-			
-			//cout << "x1: "<< x_1 << endl;
-		//	cout << "------" << endl;
+			/*
 			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
 			{
 				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1>= 0)
@@ -154,14 +146,15 @@ void Scene::rasterization(Camera* camera)
 					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1]);
 				}
 			}
+			*/
 			
 			// TRIANGLE RASTERIZATION
-			/*if(firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)
+			if((firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)||!cullingEnabled)
 				triangleRasterization(camera, 
 				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
 				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
 				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
-	*/
+	
 		}
 	}
 }
@@ -304,42 +297,51 @@ void Scene::clipping(Vec4 *v0, Vec4 *v1, Camera* camera)
 	float *tLeave = new float;
 	*tLeave = 1;
 	*tEnter = 0;
-	bool visible = false;
 
 	float dx = v1->x - v0->x;
 	float dy = v1->y - v0->y;
 	float dz = v1->z - v0->z;
 
-	float xmin = camera->left;
-	float xmax = camera->right;
-	float ymin = camera->bottom;
-	float ymax = camera->top;
-	float zmin = camera->near;
-	float zmax = camera->far;
+	float xmin = -1;
+	float xmax = 1;
+	float ymin = -1;
+	float ymax = 1;
+	float zmin = -1;
+	float zmax = 1;
 
-	visible = isVisible(dx, xmin -v0->x, tEnter, tLeave);
-	visible = isVisible(-dx, v0->x - xmax, tEnter, tLeave);
-
-	visible = isVisible(dy, ymin - v0->y, tEnter, tLeave);
-	visible = isVisible(-dy, v0->y - ymax, tEnter, tLeave);
-
-	visible = isVisible(dz, zmin - v0->z, tEnter, tLeave);
-	visible = isVisible(-dz, v0->z - zmax, tEnter, tLeave);
-	if(visible)
+	if(isVisible(dx, xmin - v0->x, tEnter, tLeave))
 	{
-		if(*tLeave<1)
+		if(isVisible(-dx, v0->x - xmax, tEnter, tLeave))
 		{
-			v1->x = v0->x + dx * (*tLeave);
-			v1->y = v0->y + dy * (*tLeave);
-			v1->z = v0->z + dz * (*tLeave);
+			if(isVisible(dy, ymin - v0->y, tEnter, tLeave))
+			{
+				if(isVisible(-dy, v0->y - ymax, tEnter, tLeave))
+				{
+					if(isVisible(dz, zmin - v0->z, tEnter, tLeave))
+					{
+						if(isVisible(-dz, v0->z - zmax, tEnter, tLeave))
+						{
+							cout << "tl: " << *tLeave << endl;
+							cout << "te: " << *tEnter << endl;
+							if (*tLeave < 1)
+							{
+								v1->x = v0->x + dx * (*tLeave);
+								v1->y = v0->y + dy * (*tLeave);
+								v1->z = v0->z + dz * (*tLeave);
+							}
+							if (*tEnter > 0)
+							{
+								v0->x = v0->x + dx * (*tEnter);
+								v0->y = v0->y + dy * (*tEnter);
+								v0->z = v0->z + dz * (*tEnter);
+							}
+							return;
+						}
+					}
+				}
+			}
 		}
-		if (*tEnter < 1)
-		{
-			v0->x = v0->x + dx * (*tEnter);
-			v0->y = v0->y + dy * (*tEnter);
-			v0->z = v0->z + dz * (*tEnter);
-		}
-	}	
+	}
 }
 void Scene::clippingModels(Camera* camera)
 {
@@ -368,9 +370,9 @@ void Scene::clippingModels(Camera* camera)
 			v3->z /= v3->t;
 			v3->t /= v3->t;
 			
-			clipping(v1, v2,camera);
-			clipping(v2, v3, camera);
-			clipping(v3, v1, camera);
+			//clipping(v1, v2,camera);
+			//clipping(v2, v3, camera);
+			//clipping(v3, v1, camera);
 
 		}
 
@@ -393,7 +395,7 @@ void Scene::backfaceCulling(Camera* camera)
 			Vec3 normal = crossProductVec3(subtractVec3(v2_3, v1_3), subtractVec3(v3_3, v1_3));
 			Vec3 v = subtractVec3(v1_3, camera->v);
 
-			if (dotProductVec3(normal, v) >= 0) 
+			if (dotProductVec3(normal, v) > 0) 
 			{
 				
 				verticesAssembled[i][j * 3]->t = 1;
@@ -418,17 +420,17 @@ void Scene::backfaceCulling(Camera* camera)
 bool Scene::isVisible(float d, float num, float *tEnter, float *tLeave)
 {
 	float t = 0;
-	if(d>0)
+	if (d > 0)
 	{
 		t = num / d;
-	}
-	if(t> *tLeave)
-	{
-		return false;
-	}
-	if (t > * tEnter)
-	{
-		*tEnter = t;
+		if (t > * tLeave)
+		{
+			return false;
+		}
+		if (t > * tEnter)
+		{
+			*tEnter = t;
+		}
 	}
 	else if (d < 0)
 	{
