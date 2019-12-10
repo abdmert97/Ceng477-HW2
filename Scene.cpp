@@ -394,9 +394,9 @@ void Scene::backfaceCulling(Camera* camera)
 			Vec3 v2_3 = *getVector3(v2);
 			Vec3 v3_3 = *getVector3(v3);
 			Vec3 normal = crossProductVec3(subtractVec3(v2_3, v1_3), subtractVec3(v3_3, v1_3));
-			Vec3 v = subtractVec3(v1_3, camera->pos);
+			Vec3 v = subtractVec3(v1_3, camera->v);
 
-			if (dotProductVec3(normal, v) > 0) 
+			if (dotProductVec3(normal, v) >= 0) 
 			{
 				
 				verticesAssembled[i][j * 3]->t = 1;
@@ -503,7 +503,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	transformation(projectionMatrix, camera);
 
 	clippingModels(camera);
-	if(!cullingEnabled)
+	if(cullingEnabled)
 		backfaceCulling(camera);	
 	
 	transformation(viewPortMatrix, camera);
@@ -520,7 +520,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	rasterization(camera);
 	//Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPortMatrix, multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
 	//modelTransformation(worldMatrix,camera);
-
+		
 	
 }
 Vec4 * Scene::getVector4(Vec3 vector)
