@@ -205,6 +205,7 @@ void Scene::rasterization(Camera* camera)
 {
 	for (int i = 0; i < models.size(); i++)
 	{
+
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
 			Vec4 firstVertice = *verticesAssembled[i][j * 3];
@@ -214,42 +215,80 @@ void Scene::rasterization(Camera* camera)
 			
 			// LINE RASTERIZATION
 
-			int x_0, y_0, x_1, y_1;
-			// vertice1 -> vertice2
-			x_0 = round(firstVertice.x);
-			y_0 = round(firstVertice.y);
-			x_1 = round(secondVertice.x);
-			y_1 = round(secondVertice.y);
-			
-			//lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
-
-			// vertice2 -> vertice3
-			x_0 = round(secondVertice.x);
-			y_0 = round(secondVertice.y);
-			x_1 = round(thirdVertice.x);
-			y_1 = round(thirdVertice.y);
-			
-			//lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1], camera);
-		
-			
-			// vertice3 -> vertice1
-			x_0 = round(thirdVertice.x);
-			y_0 = round(thirdVertice.y);
-			x_1 = round(firstVertice.x);
-			y_1 = round(firstVertice.y);
-			
-			//lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
+			if(models[i]->type == 0)
+			{
+				int x_0, y_0, x_1, y_1;
+				// vertice1 -> vertice2
 				
-			
-			
-			// TRIANGLE RASTERIZATION
-			if((firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)||!cullingEnabled)
-				triangleRasterization(camera, 
-				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
-				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
-				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
+					
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(firstVertice.x);
+					y_0 = round(firstVertice.y);
+					x_1 = round(secondVertice.x);
+					y_1 = round(secondVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
+				}
+				
+
+				// vertice2 -> vertice3
+				
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(secondVertice.x);
+					y_0 = round(secondVertice.y);
+					x_1 = round(thirdVertice.x);
+					y_1 = round(thirdVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1], camera);
+				}
+
+				// vertice3 -> vertice1
+				
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(thirdVertice.x);
+					y_0 = round(thirdVertice.y);
+					x_1 = round(firstVertice.x);
+					y_1 = round(firstVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
+				}
+			}
+			else
+			{
+				// TRIANGLE RASTERIZATION
+				if ((firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1) || !cullingEnabled)
+					triangleRasterization(camera,
+						firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
+						secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
+						thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
+
+			}
+
 			
 		}
+	}
+	if(models.size()<verticesAssembled.size())
+	{
+		for(int i = models.size(); i < verticesAssembled.size();i++)
+		{
+		//	cout << i << " i "<< endl;
+			for (int j = 0; j < verticesAssembled[i].size()-1; j+=2)
+			{
+			//	cout << j << " j " << endl;
+				Vec4 firstVertice = *verticesAssembled[i][j];
+				Vec4 secondVertice = *verticesAssembled[i][j + 1];
+				int x_0, y_0, x_1, y_1;
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(firstVertice.x);
+					y_0 = round(firstVertice.y);
+					x_1 = round(secondVertice.x);
+					y_1 = round(secondVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
+				}
+			}
+		}
+		
 	}
 }
 
@@ -385,7 +424,7 @@ Vec3* Scene::getVector3(Vec4 vector)
 {
 	return new Vec3(vector.x, vector.y, vector.z, vector.colorId);
 }
-void Scene::clipping(Vec4 *v0, Vec4 *v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera)
+void Scene::clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera)
 {
 	float *tEnter = new float;
 	float *tLeave = new float;
@@ -415,16 +454,17 @@ void Scene::clipping(Vec4 *v0, Vec4 *v1, Vec4* v0_clipped, Vec4* v1_clipped, Cam
 					{
 						if(isVisible(-dz, v0->z - zmax, tEnter, tLeave))
 						{
-							cout << "tl: " << *tLeave << endl;
-							cout << "te: " << *tEnter << endl;
+							
 							if (*tLeave < 1)
 							{
+								v1_clipped->t = 2;
 								v1_clipped->x = v0->x + dx * (*tLeave);
 								v1_clipped->y = v0->y + dy * (*tLeave);
 								v1_clipped->z = v0->z + dz * (*tLeave);
 							}
 							if (*tEnter > 0)
 							{
+								v0_clipped->t = 2;
 								v0_clipped->x = v0->x + dx * (*tEnter);
 								v0_clipped->y = v0->y + dy * (*tEnter);
 								v0_clipped->z = v0->z + dz * (*tEnter);
@@ -461,21 +501,96 @@ void Scene::clippingModels(Camera* camera)
 			v2->z /= v2->t;
 			v2->t /= v2->t;
 
-
-			Vec4* v0_c1 = new Vec4(*v0);
-			Vec4* v1_c1 = new Vec4(*v1);
-			Vec4* v2_c1 = new Vec4(*v2);
-			Vec4* v0_c2 = new Vec4(*v0);
-			Vec4* v1_c2 = new Vec4(*v1);
-			Vec4* v2_c2 = new Vec4(*v2);
+			if(models[i]->type == 0)
+			{
+				Vec4* v0_c1 = new Vec4(*v0);
+				Vec4* v1_c1 = new Vec4(*v1);
+				Vec4* v2_c2 = new Vec4(*v2);
+				Vec4* v0_c3 = new Vec4(*v0);
+				Vec4* v1_c2 = new Vec4(*v1);
+				Vec4* v2_c3 = new Vec4(*v2);
+				clipping(v0, v1, v0_c1, v1_c1, camera);
+				clipping(v1, v2, v1_c2, v2_c2, camera);
+				clipping(v2, v0, v2_c3, v0_c3, camera);
 			
-			clipping(v0, v1, v0_c1, v1_c1, camera);
-			clipping(v1, v2, v1_c2, v2_c1, camera);
-			clipping(v2, v0, v2_c2, v0_c2, camera);
+				vector<Vec4*> newVertices;
+				if(v0_c1->t == 2)
+				{
+					v0->t = -1;
+					v0_c1->t = 1;
+					newVertices.push_back(v0_c1);
 
+				}
+				else
+				{
+					Vec4* v0x = new Vec4(*v0);
+					v0x->t = 1;
+					newVertices.push_back(v0x);
+				}
+				if (v1_c1->t == 2)
+				{	 
+					v1->t = -1;
+					v1_c1->t = 1;
+					newVertices.push_back(v1_c1);
+				}
+				else
+				{
+					Vec4* v1x = new Vec4(*v1);
+					v1x->t = 1;
+					newVertices.push_back(v1x);
+				}
+				if (v1_c2->t == 2)
+				{
+					v1->t = -1;
+					v1_c2->t = 1;
+					newVertices.push_back(v1_c2);
+				}
+				else
+				{
+					Vec4* v1x = new Vec4(*v1);
+					v1x->t = 1;
+					newVertices.push_back(v1x);
+				}
+				if (v2_c2->t == 2)
+				{	 
+					v2->t = -1;
+					v2_c2->t = 1;
+					newVertices.push_back(v2_c2);
+				}
+				else
+				{
+					Vec4* v2x = new Vec4(*v2);
+					v2x->t = 1;
+					newVertices.push_back(v2x);
+				}
+				if (v2_c3->t == 2)
+				{
+					v2->t = -1;
+					v2_c3->t = 1;
+					newVertices.push_back(v2_c3);
+				}
+				else
+				{
+					Vec4* v2x = new Vec4(*v2);
+					v2x->t = 1;
+					newVertices.push_back(v2x);
+				}
+				if (v0_c3->t == 2)
+				{
+					v0->t = -1;
+					v0_c3->t = 1;
+					newVertices.push_back(v0_c3);
+				}
+				else
+				{
+					Vec4* v0x = new Vec4(*v0);
+					v0x->t = 1;
+					newVertices.push_back(v0x);
+				}
+				
 			
-			
-
+				verticesAssembled.push_back(newVertices);
+			}
 		}
 
 	}
@@ -500,9 +615,9 @@ void Scene::backfaceCulling(Camera* camera)
 			if (dotProductVec3(normal, v) > 0) 
 			{
 				
-				verticesAssembled[i][j * 3]->t = 1;
-				verticesAssembled[i][j * 3 + 1]->t =1;
-				verticesAssembled[i][j * 3 + 2]->t =1;
+			//	verticesAssembled[i][j * 3]->t = 1;
+			//	verticesAssembled[i][j * 3 + 1]->t =1;
+			//	verticesAssembled[i][j * 3 + 2]->t =1;
 			}
 			else 
 			{
