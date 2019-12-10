@@ -24,10 +24,117 @@ using namespace std;
 
 
 // TODO: Fix color interpolation
-void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1)
+void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1, Camera* camera)
 {
+	double dx = x_1 - x_0;
+	double dy = y_1 - y_0;
+	// TODO: dx == 0
+	double m = dy / dx;
+
+	int x;
+	int y;
+	int d;
+	if(0 < m && m < 1)
+	{
+		x = min(x_0, x_1);
+		y = min(y_0, y_1);
+
+		d = 2 * abs(dy) - abs(dx);
+
+		for(; x< max(x_0, x_1); x++)
+		{
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+			this->image[x][y] = Color(0, 0, 0);
+			if(d <= 0)
+			{
+				d += 2 * (abs(dy));
+			}
+			else
+			{
+				d += 2 * (abs(dy) - abs(dx));
+				y++;
+			}
+		}
+	}
+	else if (m >= 1)
+	{
+		x = min(x_0, x_1);
+		y = min(y_0, y_1);
+
+		d = 2 * abs(dx) - abs(dy);
+
+		for (; y < max(y_0, y_1); y++)
+		{
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+				this->image[x][y] = Color(0, 0, 0);
+			if (d <= 0)
+			{
+				d += 2 * (abs(dx));
+			}
+			else
+			{
+				d += 2 * (abs(dx) - abs(dy));
+				x++;
+			}
+		}
+	}
+	else if (m <= 0 && m >= -1)
+	{
+		x = min(x_0, x_1);
+		y = max(y_0, y_1);
+
+		d = 2 * abs(dy) - abs(dx);
+
+		for (; x < max(x_0, x_1); x++)
+		{
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+				this->image[x][y] = Color(0, 0, 0);
+			if (d <= 0)
+			{
+				d += 2 * (abs(dy));
+			}
+			else
+			{
+				d += 2 * (abs(dy) - abs(dx));
+				y--;
+			}
+		}
+	}
+	else if (m < -1)
+	{
+		x = max(x_0, x_1);
+		y = min(y_0, y_1);
+
+		d = 2 * abs(dx) - abs(dy);
+
+		for (; y < max(y_0, y_1); y++)
+		{
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+				this->image[x][y] = Color(0, 0, 0);
+			if (d <= 0)
+			{
+				d += 2 * (abs(dx));
+			}
+			else
+			{
+				d += 2 * (abs(dx) - abs(dy));
+				x--;
+			}
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+	/*
 	int y = y_0;
-	int d = 2 * (y_0 - y_1) + (x_1 - x_0);
+	float d = 2 * (y_0 - y_1) + (x_1 - x_0);
 	Vec3* c_0v = new Vec3(c_0->r, c_0->g, c_0->b, -1);
 	Vec3* c_1v = new Vec3(c_1->r, c_1->g, c_1->b, -1);
 	Vec3* c = new Vec3(*c_0v);
@@ -38,6 +145,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	}
 	for (int x = x_0; x <= x_1; x++)
 	{
+		if(x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
 		this->image[x][y] = Color(round(c->x), round(c->y), round(c->z));
 		//this->image[x][y] = Color(255, 255, 255);
 		if (d < 0)
@@ -51,6 +159,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 		}
 		*c = addVec3(*c, *d_c);
 	}
+	*/
 }
 
 void Scene::triangleRasterization(Camera* camera, 
@@ -85,7 +194,6 @@ void Scene::triangleRasterization(Camera* camera,
 					double r = alpha * c_0->r + beta * c_1->r + theta * c_2->r;
 					double g = alpha * c_0->g + beta * c_1->g + theta * c_2->g;
 					double b = alpha * c_0->b + beta * c_1->b + theta * c_2->b;
-					if(x>=0 && x < camera->horRes && y >= 0 && y < camera->horRes)
 					this->image[x][y] = Color(r, g, b);
 				}
 			
@@ -112,41 +220,27 @@ void Scene::rasterization(Camera* camera)
 			y_0 = round(firstVertice.y);
 			x_1 = round(secondVertice.x);
 			y_1 = round(secondVertice.y);
-			/*
-			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
-			{
-				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1>= 0)
-				{
-					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1]);
-				}
-			}
+			
+			//lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
 
 			// vertice2 -> vertice3
 			x_0 = round(secondVertice.x);
 			y_0 = round(secondVertice.y);
 			x_1 = round(thirdVertice.x);
 			y_1 = round(thirdVertice.y);
-			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
-			{
-				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1 >= 0)
-				{
-					lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1]);
-				}
-			}
+			
+			//lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1], camera);
+		
 			
 			// vertice3 -> vertice1
 			x_0 = round(thirdVertice.x);
 			y_0 = round(thirdVertice.y);
 			x_1 = round(firstVertice.x);
 			y_1 = round(firstVertice.y);
-			if (x_0 <= camera->horRes && y_0 <= camera->verRes && x_1 <= camera->horRes && y_1 <= camera->verRes)
-			{
-				if (x_0 >= 0 && y_0 >= 0 && x_1 >= 0 && y_1 >= 0)
-				{
-					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1]);
-				}
-			}
-			*/
+			
+			//lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
+				
+			
 			
 			// TRIANGLE RASTERIZATION
 			if((firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)||!cullingEnabled)
@@ -154,7 +248,7 @@ void Scene::rasterization(Camera* camera)
 				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
 				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
 				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
-	
+			
 		}
 	}
 }
@@ -293,6 +387,8 @@ Vec3* Scene::getVector3(Vec4 vector)
 }
 void Scene::clipping(Vec4 *v0, Vec4 *v1, Camera* camera)
 {
+	Vec4* v0_clipped = new Vec4(*v0);
+	Vec4* v1_clipped = new Vec4(*v1);
 	float *tEnter = new float;
 	float *tLeave = new float;
 	*tLeave = 1;
@@ -352,9 +448,7 @@ void Scene::clippingModels(Camera* camera)
 			Vec4 *v1 = verticesAssembled[i][j * 3];
 			Vec4 *v2 = verticesAssembled[i][j * 3 + 1];
 			Vec4 *v3 = verticesAssembled[i][j * 3 + 2];
-			Vec3 *v1_3 = getVector3(*v1);
-			Vec3* v2_3 = getVector3(*v2);
-			Vec3* v3_3 = getVector3(*v3);
+			
 			v1->x /= v1->t;
 			v1->y /= v1->t;
 			v1->z /= v1->t;
@@ -370,9 +464,11 @@ void Scene::clippingModels(Camera* camera)
 			v3->z /= v3->t;
 			v3->t /= v3->t;
 			
-			//clipping(v1, v2,camera);
-			//clipping(v2, v3, camera);
-			//clipping(v3, v1, camera);
+			clipping(v1, v2,camera);
+			clipping(v2, v3, camera);
+			clipping(v3, v1, camera);
+
+			
 
 		}
 
@@ -593,16 +689,13 @@ Matrix4 Scene::getPerspectiveProjectionMatrix(Camera* camera)
 Matrix4 Scene::getViewportProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
-	projectionMatix.val[0][0] = camera->horRes / 2;
-	projectionMatix.val[1][1] = camera->verRes / 2;
+	projectionMatix.val[0][0] = camera->horRes / 2.0;
+	projectionMatix.val[1][1] = camera->verRes / 2.0;
 	projectionMatix.val[2][2] = 0.5;
 
-	projectionMatix.val[0][3] = (camera->horRes -1) / 2;
-	projectionMatix.val[1][3] = (camera->verRes - 1) / 2;
+	projectionMatix.val[0][3] = (camera->horRes -1) / 2.0;
+	projectionMatix.val[1][3] = (camera->verRes - 1) / 2.0;
 	projectionMatix.val[2][3] = 0.5;
-
-	
-	projectionMatix.val[3][3] = 1;
 
 	return projectionMatix;
 }

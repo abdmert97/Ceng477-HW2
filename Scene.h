@@ -61,7 +61,7 @@ public:
 	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
 	void rasterization(Camera* camera);
 	void transformation(Matrix4 transformationMatrix, Camera* camera);
-	void lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1);
+	void lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1, Camera* camera);
 	void modelingTransformation();
 	Matrix4 getTranslationMatrix(Translation* translation);
 	Matrix4 getScalingMatrix(Scaling* scaling);
