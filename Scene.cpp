@@ -156,10 +156,15 @@ void Scene::rasterization(Camera* camera)
 			}
 			*/
 			// TRIANGLE RASTERIZATION
-			triangleRasterization(camera, 
+			if(firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1)
+				triangleRasterization(camera, 
 				firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
 				secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
 				thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
+			else
+			{
+				cout << firstVertice.t << secondVertice.t << thirdVertice.t << endl;
+			}
 		}
 	}
 }
@@ -193,13 +198,13 @@ void Scene::modelingTransformation()
 					*verticesAssembled[i][k * 3] = first;
 					*verticesAssembled[i][k * 3 + 1] = second;
 					*verticesAssembled[i][k * 3 + 2] =third;
-					
+				/*
 					cout << "############" << endl;
 					cout << *verticesAssembled[i][k * 3] << endl;
 					cout << *verticesAssembled[i][k * 3 + 1] << endl;
 					cout << *verticesAssembled[i][k * 3 + 2] << endl;
 					cout << "^^^^^^^^^^^^^^" << endl;
-					
+					*/
 				}
 			}
 			else if (models[i]->transformationTypes[j] == 's')
@@ -288,9 +293,7 @@ void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
 			Vec3* first1 = getVector3(first);
 			Vec3* second1 = getVector3(second);
 			Vec3* third1 = getVector3(third);
-			clipping(first1, second1, camera);
-			clipping(second1, third1, camera);
-			clipping(third1, first1, camera);
+
 		}
 	}
 }
@@ -298,7 +301,7 @@ Vec3* Scene::getVector3(Vec4 vector)
 {
 	return new Vec3(vector.x, vector.y, vector.z, vector.colorId);
 }
-void Scene::clipping(Vec3 *v0, Vec3 *v1, Camera* camera)
+void Scene::clipping(Vec4 *v0, Vec4 *v1, Camera* camera)
 {
 	float *tEnter = new float;
 	float *tLeave = new float;
@@ -339,9 +342,76 @@ void Scene::clipping(Vec3 *v0, Vec3 *v1, Camera* camera)
 			v0->y = v0->y + dy * (*tEnter);
 			v0->z = v0->z + dz * (*tEnter);
 		}
+	}	
+}
+void Scene::clippingModels(Camera* camera)
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec4 *v1 = verticesAssembled[i][j * 3];
+			Vec4 *v2 = verticesAssembled[i][j * 3 + 1];
+			Vec4 *v3 = verticesAssembled[i][j * 3 + 2];
+			Vec3 *v1_3 = getVector3(*v1);
+			Vec3* v2_3 = getVector3(*v2);
+			Vec3* v3_3 = getVector3(*v3);
+			v1->x /= v1->t;
+			v1->y /= v1->t;
+			v1->z /= v1->t;
+			
+			v2->x /= v2->t;
+			v2->y /= v2->t;
+			v2->z /= v2->t;
+			
+			v3->x /= v3->t;
+			v3->y /= v3->t;
+			v3->z /= v3->t;
+			
+			clipping(v1, v2,camera);
+			clipping(v2, v3, camera);
+			clipping(v3, v1, camera);
+		}
+
+	}
+}
+
+void Scene::backfaceCulling(Camera* camera)
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec4 v1 = *verticesAssembled[i][j * 3];
+			Vec4 v2 = *verticesAssembled[i][j * 3 + 1];
+			Vec4 v3 = *verticesAssembled[i][j * 3 + 2];
+
+			Vec3 v1_3 = *getVector3(v1);
+			Vec3 v2_3 = *getVector3(v2);
+			Vec3 v3_3 = *getVector3(v3);
+			Vec3 normal = crossProductVec3(subtractVec3(v2_3, v1_3), subtractVec3(v3_3, v1_3));
+			Vec3 v = subtractVec3(v1_3, camera->pos);
+
+			if (dotProductVec3(normal, v) > 0) 
+			{
+				
+				verticesAssembled[i][j * 3]->t = 1;
+				verticesAssembled[i][j * 3 + 1]->t =1;
+				verticesAssembled[i][j * 3 + 2]->t =1;
+			}
+			else 
+			{
+				verticesAssembled[i][j * 3]->t = -1;
+				verticesAssembled[i][j * 3 + 1]->t = -1;
+				verticesAssembled[i][j * 3 + 2]->t = -1;
+			}
+		}
+
 	}
 
-	
+
+
+
 }
 
 bool Scene::isVisible(float d, float num, float *tEnter, float *tLeave)
@@ -427,6 +497,10 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	modelingTransformation();
 	transformation(cameraMatrix, camera);
 	transformation(projectionMatrix, camera);
+
+	clippingModels(camera);
+	//backfaceCulling(camera);	
+	
 	transformation(viewPortMatrix, camera);
 	for (int i = 0; i < models.size(); i++)
 	{
@@ -524,7 +598,7 @@ Matrix4 Scene::getViewportProjectionMatrix(Camera* camera)
 	projectionMatix.val[2][3] = 0.5;
 
 	
-	projectionMatix.val[3][3] = 0;
+	projectionMatix.val[3][3] = 1;
 
 	return projectionMatix;
 }
@@ -812,6 +886,8 @@ void Scene::initializeImage(Camera *camera)
 		}
 	}
 }
+
+
 
 /*
 	If given value is less than 0, converts value to 0.

@@ -37,10 +37,12 @@ public:
 	vector< Model* > models;
 	// Implemented as hw
 	vector < vector<Vec4*> > verticesAssembled;
-
+	vector < vector<bool> > canVisible;
 	Scene(const char *xmlPath);
 	
 	void initializeImage(Camera* camera);
+	void clippingModels(Camera* camera);
+	void backfaceCulling(Camera* camera);
 	void forwardRenderingPipeline(Camera* camera);
 	int makeBetweenZeroAnd255(double value);
 	void writeImageToPPMFile(Camera* camera);
@@ -54,7 +56,7 @@ public:
 	Vec4* getVector4(Vec3 vector);
 	Vec3* getVector3(Vec4 vector);
 	void modelTransformation(Matrix4 worldMatrix,Camera *camera);
-	void clipping(Vec3 *v0, Vec3 *v1, Camera* camera);
+	void clipping(Vec4 *v0, Vec4 *v1, Camera* camera);
 	bool isVisible(float d,float num,float *tEnter,float *tLeave);
 	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
 	void rasterization(Camera* camera);
