@@ -59,6 +59,7 @@ public:
 	void clipping(Vec4 *v0, Vec4 *v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera);
 	bool isVisible(float d,float num,float *tEnter,float *tLeave);
 	Vec3 getPointAtt(Vec3 v0, Vec3 v1, float t);
+	void setModelw();
 	void rasterization(Camera* camera);
 	void transformation(Matrix4 transformationMatrix, Camera* camera);
 	void lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1, Camera* camera);

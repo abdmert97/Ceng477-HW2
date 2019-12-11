@@ -234,12 +234,13 @@ void Scene::rasterization(Camera* camera)
 			
 		}
 	}
-	
+
+	if (newVertices.size() == 0) return;
 	for (int i = 0; i < newVertices.size()-1; i+=2)
 	{
-			//	cout << j << " j " << endl;
-		Vec4 firstVertice = *newVertices[i];
-		Vec4 secondVertice = *newVertices[i+1];
+			
+				Vec4 firstVertice = *newVertices[i];
+				Vec4 secondVertice = *newVertices[i+1];
 				int x_0, y_0, x_1, y_1;
 				if (firstVertice.t == 1 && secondVertice.t == 1)
 				{
@@ -249,6 +250,11 @@ void Scene::rasterization(Camera* camera)
 					y_1 = round(secondVertice.y);
 					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
 				}
+				else
+				{
+					cout << "hh" << endl;
+				}
+
 
 	}
 		
@@ -457,7 +463,8 @@ void Scene::clippingModels(Camera* camera)
 			Vec4 *v0 = verticesAssembled[i][j * 3];
 			Vec4 *v1 = verticesAssembled[i][j * 3 + 1];
 			Vec4 *v2 = verticesAssembled[i][j * 3 + 2];
-			
+			if (v0->t == -1 && v1->t == -1 && v2->t == -1)
+				return;
 			v0->x /= v0->t;
 			v0->y /= v0->t;
 			v0->z /= v0->t;
@@ -488,7 +495,7 @@ void Scene::clippingModels(Camera* camera)
 				
 			
 			    v0->t = -1;
-			   v1->t = -1;
+			    v1->t = -1;
 			    v2->t = -1;
 				
 			    newVertices.push_back(v0_c1);
@@ -535,6 +542,7 @@ void Scene::backfaceCulling(Camera* camera)
 				verticesAssembled[i][j * 3 + 2]->t = -1;
 			}
 		}
+
 
 	}
 
@@ -583,6 +591,35 @@ Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
 }
 
 
+void Scene::setModelw()
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec4* v0 = verticesAssembled[i][j * 3];
+			Vec4* v1 = verticesAssembled[i][j * 3 + 1];
+			Vec4* v2 = verticesAssembled[i][j * 3 + 2];
+			
+			v0->x /= v0->t;
+			v0->y /= v0->t;
+			v0->z /= v0->t;
+			v0->t /= v0->t;
+
+			v1->x /= v1->t;
+			v1->y /= v1->t;
+			v1->z /= v1->t;
+			v1->t /= v1->t;
+
+			v2->x /= v2->t;
+			v2->y /= v2->t;
+			v2->z /= v2->t;
+			v2->t /= v2->t;
+		}
+	}
+
+}
+
 /*
 	Transformations, clipping, culling, rasterization are done here.
 	You can define helper functions inside Scene class implementation.
@@ -627,10 +664,12 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	modelingTransformation();
 	transformation(cameraMatrix, camera);
 	transformation(projectionMatrix, camera);
-
+	setModelw();
+		
+	if (cullingEnabled)
+		backfaceCulling(camera);
 	clippingModels(camera);
-	if(cullingEnabled)
-		backfaceCulling(camera);	
+
 	
 	transformation(viewPortMatrix, camera);
 	for (int i = 0; i < models.size(); i++)
