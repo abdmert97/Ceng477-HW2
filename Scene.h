@@ -56,7 +56,7 @@ public:
 		int x_2, int y_2, Color* c_2);
 	void rasterization(Camera* camera);
 	void clipColors(Vec4* v0, Vec4* v1, Vec4* v_clipped);
-	bool isVisible(float d, float num, float* tEnter, float* tLeave);
+	bool isVisible(double d, double num, double* tEnter, double* tLeave);
 	void clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera);
 	void clippingModels(Camera* camera);
 	void backfaceCulling(Camera* camera);
