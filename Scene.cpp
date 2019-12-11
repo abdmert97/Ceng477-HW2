@@ -183,7 +183,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 
 		for (; x < max(x_0, x_1); x++)
 		{
-			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->verRes)
 			{
 				double colorScale_v0 = abs((x - x_1) / dx);
 				double colorScale_v1 = abs((x_0 - x) / dx);
@@ -212,7 +212,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 
 		for (; y < max(y_0, y_1); y++)
 		{
-			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->verRes)
 			{
 				double colorScale_v0 = abs((y - y_1) / dy);
 				double colorScale_v1 = abs((y_0 - y) / dy);
@@ -241,7 +241,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 
 		for (; x < max(x_0, x_1); x++)
 		{
-			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->verRes)
 			{
 				double colorScale_v0 = abs((x - x_1) / dx);
 				double colorScale_v1 = abs((x_0 - x) / dx);
@@ -270,7 +270,7 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 
 		for (; y < max(y_0, y_1); y++)
 		{
-			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->verRes)
 			{
 				double colorScale_v0 = abs((y - y_1) / dy);
 				double colorScale_v1 = abs((y_0 - y) / dy);
@@ -363,10 +363,12 @@ void Scene::triangleRasterization(Camera* camera,
 				double g = alpha * c_0->g + beta * c_1->g + gamma * c_2->g;
 				double b = alpha * c_0->b + beta * c_1->b + gamma * c_2->b;
 
-				if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
+				if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->verRes)
 				{
-					Color* newColor = new Color(r, g, b);
-					this->image[x][y] = *newColor;
+					auto& color = this->image.at(x).at(y);
+					color.r = r;
+					color.g = g;
+					color.b = b;
 				}
 			}
 
@@ -376,6 +378,12 @@ void Scene::triangleRasterization(Camera* camera,
 
 void Scene::rasterization(Camera* camera)
 {
+	for (int i = 0; i < newVertices.size(); ++i)
+	{
+		delete newVertices[i];
+
+	}
+	newVertices.clear();
 	for (int i = 0; i < models.size(); i++)
 	{
 
@@ -442,13 +450,12 @@ void Scene::rasterization(Camera* camera)
 
 		}
 	}
-
+	return;
 	int test = 0;
 	if (newVertices.size() == 0) return;
 	for (int i = 0; i < newVertices.size() - 1; i += 2)
 	{
-
-		Vec4 firstVertice = *newVertices[i];
+		Vec4 firstVertice =  *newVertices[i];
 		Vec4 secondVertice = *newVertices[i + 1];
 		double x_0, y_0, x_1, y_1;
 		if (firstVertice.t == 1 && secondVertice.t == 1)
@@ -459,10 +466,6 @@ void Scene::rasterization(Camera* camera)
 			y_1 = secondVertice.y;
 			lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
 			cout << test++ << endl;
-		}
-		else
-		{
-			cout << "error" << endl;
 		}
 	}
 }
