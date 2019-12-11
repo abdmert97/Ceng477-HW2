@@ -23,7 +23,147 @@ using namespace tinyxml2;
 using namespace std;
 
 
-// TODO: Fix color interpolation
+/********************************************
+ * GENERAL HELPER FUNCTIONS					*
+ ********************************************/
+void Scene::transformation(Matrix4 transformationMatrix, Camera* camera)
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec4 firstVertice = *verticesAssembled[i][j * 3];
+			Vec4 secondVertice = *verticesAssembled[i][j * 3 + 1];
+			Vec4 thirdVertice = *verticesAssembled[i][j * 3 + 2];
+
+
+			Vec4 first = multiplyMatrixWithVec4(transformationMatrix, firstVertice);
+			Vec4 second = multiplyMatrixWithVec4(transformationMatrix, secondVertice);
+			Vec4 third = multiplyMatrixWithVec4(transformationMatrix, thirdVertice);
+
+			*verticesAssembled[i][j * 3] = first;
+			*verticesAssembled[i][j * 3 + 1] = second;
+			*verticesAssembled[i][j * 3 + 2] = third;
+		}
+	}
+
+	for (int i = 0; i < newVertices.size(); i++)
+	{
+		*newVertices[i] = multiplyMatrixWithVec4(transformationMatrix, *newVertices[i]);
+	}
+
+}
+
+void Scene::modelingTransformation()
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTransformations; j++)
+		{
+			if (models[i]->transformationTypes[j] == 't')
+			{
+				// TRANSLATION
+				Matrix4 translationMatrix = getTranslationMatrix(translations[models[i]->transformationIds[j] - 1]);
+				for (int k = 0; k < models[i]->numberOfTriangles; k++)
+				{
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+					Vec4 first = multiplyMatrixWithVec4(translationMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(translationMatrix, secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(translationMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] = third;
+				}
+			}
+			else if (models[i]->transformationTypes[j] == 's')
+			{
+				// SCALING
+				Matrix4 scalingMatrix = getScalingMatrix(scalings[models[i]->transformationIds[j] - 1]);
+				cout << scalingMatrix << endl;
+				for (int k = 0; k < models[i]->numberOfTriangles; k++)
+				{
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+
+					Vec4 first = multiplyMatrixWithVec4(scalingMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(scalingMatrix, secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(scalingMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] = third;
+				}
+			}
+			else if (models[i]->transformationTypes[j] == 'r')
+			{
+				// ROTATING
+				Matrix4 rotationMatrix = getRotationMatrix(rotations[models[i]->transformationIds[j] - 1]);
+				cout << rotationMatrix << endl;
+				for (int k = 0; k < models[i]->numberOfTriangles; k++)
+				{
+					Vec4 firstVertice = *verticesAssembled[i][k * 3];
+					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
+					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
+
+					Vec4 first = multiplyMatrixWithVec4(rotationMatrix, firstVertice);
+					Vec4 second = multiplyMatrixWithVec4(rotationMatrix, secondVertice);
+					Vec4 third = multiplyMatrixWithVec4(rotationMatrix, thirdVertice);
+					*verticesAssembled[i][k * 3] = first;
+					*verticesAssembled[i][k * 3 + 1] = second;
+					*verticesAssembled[i][k * 3 + 2] = third;
+				}
+			}
+		}
+
+	}
+}
+
+Vec3* Scene::getVector3(Vec4 vector)
+{
+	return new Vec3(vector.x, vector.y, vector.z, vector.colorId);
+}
+
+Vec4* Scene::getVector4(Vec3 vector)
+{
+	Vec4* vec = new Vec4(vector.x, vector.y, vector.z, 1, vector.colorId);
+	return  vec;
+}
+
+void Scene::setModelw()
+{
+	for (int i = 0; i < models.size(); i++)
+	{
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec4* v0 = verticesAssembled[i][j * 3];
+			Vec4* v1 = verticesAssembled[i][j * 3 + 1];
+			Vec4* v2 = verticesAssembled[i][j * 3 + 2];
+
+			v0->x /= v0->t;
+			v0->y /= v0->t;
+			v0->z /= v0->t;
+			v0->t /= v0->t;
+
+			v1->x /= v1->t;
+			v1->y /= v1->t;
+			v1->z /= v1->t;
+			v1->t /= v1->t;
+
+			v2->x /= v2->t;
+			v2->y /= v2->t;
+			v2->z /= v2->t;
+			v2->t /= v2->t;
+		}
+	}
+
+}
+
+
+/********************************************
+ * HELPER FUNCTIONS FOR RASTERIZATION		*
+ ********************************************/
 void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Color* c_1, Camera* camera)
 {
 	double dx = x_1 - x_0;
@@ -34,18 +174,25 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	int x;
 	int y;
 	int d;
-	if(0 < m && m < 1)
+	if (0 < m && m < 1)
 	{
 		x = min(x_0, x_1);
 		y = min(y_0, y_1);
 
 		d = 2 * abs(dy) - abs(dx);
 
-		for(; x< max(x_0, x_1); x++)
+		for (; x < max(x_0, x_1); x++)
 		{
 			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
-				this->image[x][y] = Color(0, 0, 0);
-			if(d <= 0)
+			{
+				double colorScale_v0 = abs((x - x_1) / dx);
+				double colorScale_v1 = abs((x_0 - x) / dx);
+				this->image[x][y] = Color(
+					colorScale_v0 * c_0->r + colorScale_v1 * c_1->r,
+					colorScale_v0 * c_0->g + colorScale_v1 * c_1->g,
+					colorScale_v0 * c_0->b + colorScale_v1 * c_1->b);
+			}
+			if (d <= 0)
 			{
 				d += 2 * (abs(dy));
 			}
@@ -66,7 +213,14 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 		for (; y < max(y_0, y_1); y++)
 		{
 			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
-				this->image[x][y] = Color(0, 0, 0);
+			{
+				double colorScale_v0 = abs((y - y_1) / dy);
+				double colorScale_v1 = abs((y_0 - y) / dy);
+				this->image[x][y] = Color(
+					colorScale_v0 * c_0->r + colorScale_v1 * c_1->r,
+					colorScale_v0 * c_0->g + colorScale_v1 * c_1->g,
+					colorScale_v0 * c_0->b + colorScale_v1 * c_1->b);
+			}
 			if (d <= 0)
 			{
 				d += 2 * (abs(dx));
@@ -88,7 +242,14 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 		for (; x < max(x_0, x_1); x++)
 		{
 			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
-				this->image[x][y] = Color(0, 0, 0);
+			{
+				double colorScale_v0 = abs((x - x_1) / dx);
+				double colorScale_v1 = abs((x_0 - x) / dx);
+				this->image[x][y] = Color(
+					colorScale_v0 * c_0->r + colorScale_v1 * c_1->r,
+					colorScale_v0 * c_0->g + colorScale_v1 * c_1->g,
+					colorScale_v0 * c_0->b + colorScale_v1 * c_1->b);
+			}
 			if (d <= 0)
 			{
 				d += 2 * (abs(dy));
@@ -110,7 +271,14 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 		for (; y < max(y_0, y_1); y++)
 		{
 			if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
-				this->image[x][y] = Color(0, 0, 0);
+			{
+				double colorScale_v0 = abs((y - y_1) / dy);
+				double colorScale_v1 = abs((y_0 - y) / dy);
+				this->image[x][y] = Color(
+					colorScale_v0 * c_0->r + colorScale_v1 * c_1->r,
+					colorScale_v0 * c_0->g + colorScale_v1 * c_1->g,
+					colorScale_v0 * c_0->b + colorScale_v1 * c_1->b);
+			}
 			if (d <= 0)
 			{
 				d += 2 * (abs(dx));
@@ -162,41 +330,46 @@ void Scene::lineRasterization(int x_0, int y_0, Color* c_0, int x_1, int y_1, Co
 	*/
 }
 
-void Scene::triangleRasterization(Camera* camera, 
+void Scene::triangleRasterization(Camera* camera,
 	int x_0, int y_0, Color* c_0,
 	int x_1, int y_1, Color* c_1,
 	int x_2, int y_2, Color* c_2)
 {
-	
+
 	int x_min = min(min(x_0, x_1), x_2);
 	int y_min = min(min(y_0, y_1), y_2);
 
 	int x_max = max(max(x_0, x_1), x_2);
 	int y_max = max(max(y_0, y_1), y_2);
-	
-	for(int y = y_min; y <= y_max; y++)
-	{
-		for(int x = x_min; x <= x_max; x++)
-		{
-		
-				double f_01_xy = x * (y_0 - y_1) + y * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
-				double f_12_xy = x * (y_1 - y_2) + y * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
-				double f_20_xy = x * (y_2 - y_0) + y * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
-				double f_01_x2y2 = x_2 * (y_0 - y_1) + y_2 * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
-				double f_12_x0y0 = x_0 * (y_1 - y_2) + y_0 * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
-				double f_20_x1y1 = x_1 * (y_2 - y_0) + y_1 * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
 
-				double alpha = f_12_xy / f_12_x0y0;
-				double beta = f_20_xy / f_20_x1y1;
-				double theta = f_01_xy / f_01_x2y2;
-				if (alpha >= 0 && beta >= 0 && theta >= 0)
+	for (int y = y_min; y < y_max; y++)
+	{
+		for (int x = x_min; x < x_max; x++)
+		{
+
+			double f_01_xy = x * (y_0 - y_1) + y * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
+			double f_12_xy = x * (y_1 - y_2) + y * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
+			double f_20_xy = x * (y_2 - y_0) + y * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
+			double f_01_x2y2 = x_2 * (y_0 - y_1) + y_2 * (x_1 - x_0) + x_0 * y_1 - y_0 * x_1;
+			double f_12_x0y0 = x_0 * (y_1 - y_2) + y_0 * (x_2 - x_1) + x_1 * y_2 - y_1 * x_2;
+			double f_20_x1y1 = x_1 * (y_2 - y_0) + y_1 * (x_0 - x_2) + x_2 * y_0 - y_2 * x_0;
+
+			double alpha = f_12_xy / f_12_x0y0;
+			double beta = f_20_xy / f_20_x1y1;
+			double gamma = f_01_xy / f_01_x2y2;
+			if (alpha >= 0 && beta >= 0 && gamma >= 0)
+			{
+				double r = alpha * c_0->r + beta * c_1->r + gamma * c_2->r;
+				double g = alpha * c_0->g + beta * c_1->g + gamma * c_2->g;
+				double b = alpha * c_0->b + beta * c_1->b + gamma * c_2->b;
+
+				if (x >= 0 && y >= 0 && x < camera->horRes && y < camera->horRes)
 				{
-					double r = alpha * c_0->r + beta * c_1->r + theta * c_2->r;
-					double g = alpha * c_0->g + beta * c_1->g + theta * c_2->g;
-					double b = alpha * c_0->b + beta * c_1->b + theta * c_2->b;
-					this->image[x][y] = Color(r, g, b);
+					Color* newColor = new Color(r, g, b);
+					this->image[x][y] = *newColor;
 				}
-			
+			}
+
 		}
 	}
 }
@@ -212,11 +385,12 @@ void Scene::rasterization(Camera* camera)
 			Vec4 secondVertice = *verticesAssembled[i][j * 3 + 1];
 			Vec4 thirdVertice = *verticesAssembled[i][j * 3 + 2];
 
-			
+
 			// LINE RASTERIZATION
 
-			if(models[i]->type == 0)
+			if (models[i]->type == 0)
 			{
+				continue;
 				int x_0, y_0, x_1, y_1;
 				// vertice1 -> vertice2
 
@@ -252,7 +426,7 @@ void Scene::rasterization(Camera* camera)
 					y_1 = round(firstVertice.y);
 					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
 				}
-				
+
 			}
 			else
 			{
@@ -265,180 +439,90 @@ void Scene::rasterization(Camera* camera)
 
 			}
 
-			
-		}
-	}
-
-	/*if (newVertices.size() == 0) return;
-	for (int i = 0; i < newVertices.size()-1; i+=2)
-	{
-			
-				Vec4 firstVertice = *newVertices[i];
-				Vec4 secondVertice = *newVertices[i+1];
-				int x_0, y_0, x_1, y_1;
-				if (firstVertice.t == 1 && secondVertice.t == 1)
-				{
-					x_0 = round(firstVertice.x);
-					y_0 = round(firstVertice.y);
-					x_1 = round(secondVertice.x);
-					y_1 = round(secondVertice.y);
-					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
-				}
-				else
-				{
-					cout << "hh" << endl;
-				}
-
-
-	}*/
-		
-		
-}
-
-
-
-
-void Scene::modelingTransformation()
-{
-	for (int i = 0; i < models.size(); i++)
-	{
-		for (int j = 0; j < models[i]->numberOfTransformations; j++)
-		{
-			if (models[i]->transformationTypes[j] == 't')
-			{
-				cout << "Translating..." << endl;
-				Matrix4 translationMatrix = getTranslationMatrix(translations[models[i]->transformationIds[j] - 1]);
-				for (int k = 0; k < models[i]->numberOfTriangles; k++)
-				{
-					Vec4 firstVertice = *verticesAssembled[i][k * 3];
-					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
-					/*
-					cout << "############" << endl;
-					cout << *verticesAssembled[i][k * 3] << endl;
-					cout << *verticesAssembled[i][k * 3 + 1] << endl;
-					cout << *verticesAssembled[i][k * 3 + 2] << endl;
-					*/
-					Vec4 first = multiplyMatrixWithVec4(translationMatrix, firstVertice);
-					Vec4 second = multiplyMatrixWithVec4(translationMatrix, secondVertice);
-					Vec4 third = multiplyMatrixWithVec4(translationMatrix, thirdVertice);
-					*verticesAssembled[i][k * 3] = first;
-					*verticesAssembled[i][k * 3 + 1] = second;
-					*verticesAssembled[i][k * 3 + 2] =third;
-				/*
-					cout << "############" << endl;
-					cout << *verticesAssembled[i][k * 3] << endl;
-					cout << *verticesAssembled[i][k * 3 + 1] << endl;
-					cout << *verticesAssembled[i][k * 3 + 2] << endl;
-					cout << "^^^^^^^^^^^^^^" << endl;
-					*/
-				}
-			}
-			else if (models[i]->transformationTypes[j] == 's')
-			{
-				cout << "Scaling..." << endl;
-				Matrix4 scalingMatrix = getScalingMatrix(scalings[models[i]->transformationIds[j] - 1]);
-				cout << scalingMatrix << endl;
-				for (int k = 0; k < models[i]->numberOfTriangles; k++)
-				{
-					Vec4 firstVertice = *verticesAssembled[i][k * 3];
-					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
-
-					Vec4 first = multiplyMatrixWithVec4(scalingMatrix, firstVertice);
-					Vec4 second = multiplyMatrixWithVec4(scalingMatrix,secondVertice);
-					Vec4 third = multiplyMatrixWithVec4(scalingMatrix, thirdVertice);
-					*verticesAssembled[i][k * 3] = first;
-					*verticesAssembled[i][k * 3 + 1] = second;
-					*verticesAssembled[i][k * 3 + 2] = third;
-				}
-			}
-			else if (models[i]->transformationTypes[j] == 'r')
-			{
-				cout << "Rotating..." << endl;
-				Matrix4 rotationMatrix = getRotationMatrix(rotations[models[i]->transformationIds[j] - 1]);
-				cout << rotationMatrix << endl;
-				for (int k = 0; k < models[i]->numberOfTriangles; k++)
-				{
-					Vec4 firstVertice = *verticesAssembled[i][k * 3];
-					Vec4 secondVertice = *verticesAssembled[i][k * 3 + 1];
-					Vec4 thirdVertice = *verticesAssembled[i][k * 3 + 2];
-
-					Vec4 first = multiplyMatrixWithVec4(rotationMatrix, firstVertice);
-					Vec4 second = multiplyMatrixWithVec4(rotationMatrix, secondVertice);
-					Vec4 third = multiplyMatrixWithVec4(rotationMatrix, thirdVertice);
-					*verticesAssembled[i][k * 3] = first;
-					*verticesAssembled[i][k * 3 + 1] = second;
-					*verticesAssembled[i][k * 3 + 2] = third;
-				}
-			}
-		}
-		
-	}
-}
-
-void Scene::transformation(Matrix4 transformationMatrix, Camera* camera)
-{
-	for (int i = 0; i < models.size(); i++)
-	{
-		for (int j = 0; j < models[i]->numberOfTriangles; j++)
-		{
-			Vec4 firstVertice = *verticesAssembled[i][j * 3];
-			Vec4 secondVertice = *verticesAssembled[i][j * 3 + 1];
-			Vec4 thirdVertice = *verticesAssembled[i][j * 3 + 2];
-
-
-			Vec4 first = multiplyMatrixWithVec4(transformationMatrix, firstVertice);
-			Vec4 second = multiplyMatrixWithVec4(transformationMatrix,secondVertice);
-			Vec4 third = multiplyMatrixWithVec4(transformationMatrix, thirdVertice);
-
-			*verticesAssembled[i][j * 3] = first;
-			*verticesAssembled[i][j * 3 + 1] = second;
-			*verticesAssembled[i][j * 3 + 2] =third;
-		}
-	}
-
-		for (int i =0; i<newVertices.size(); i++)
-		{
-			*newVertices[i] = multiplyMatrixWithVec4(transformationMatrix, *newVertices[i]);
-		}
-	
-}
-
-
-
-void Scene::modelTransformation(Matrix4 worldMatrix,Camera *camera)
-{
-	for (int i = 0 ; i < models.size();i++)
-	{
-		for (int j = 0 ; j < models[i]->numberOfTriangles;j++)
-		{
-
-		
-			Vec3 firstVertice =	*vertices[models[i]->triangles[j].getFirstVertexId() - 1];
-			Vec3 secondVertice = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
-			Vec3 thirdVertice = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
-
-
-			Vec4 first = multiplyMatrixWithVec4(worldMatrix, *getVector4(firstVertice));
-			Vec4 second = multiplyMatrixWithVec4(worldMatrix, *getVector4(secondVertice));
-			Vec4 third = multiplyMatrixWithVec4(worldMatrix, *getVector4(thirdVertice));
-
-			Vec3* first1 = getVector3(first);
-			Vec3* second1 = getVector3(second);
-			Vec3* third1 = getVector3(third);
 
 		}
 	}
+
+	int test = 0;
+	if (newVertices.size() == 0) return;
+	for (int i = 0; i < newVertices.size() - 1; i += 2)
+	{
+
+		Vec4 firstVertice = *newVertices[i];
+		Vec4 secondVertice = *newVertices[i + 1];
+		double x_0, y_0, x_1, y_1;
+		if (firstVertice.t == 1 && secondVertice.t == 1)
+		{
+			x_0 = firstVertice.x;
+			y_0 = firstVertice.y;
+			x_1 = secondVertice.x;
+			y_1 = secondVertice.y;
+			lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
+			cout << test++ << endl;
+		}
+		else
+		{
+			cout << "error" << endl;
+		}
+	}
 }
-Vec3* Scene::getVector3(Vec4 vector)
+
+
+/********************************************
+ * HELPER FUNCTIONS FOR CLIPPING			*
+ ********************************************/
+void Scene::clipColors(Vec4* v0, Vec4* v1, Vec4* v_clipped)
 {
-	return new Vec3(vector.x, vector.y, vector.z, vector.colorId);
+	Color* v0_color = colorsOfVertices[v0->colorId - 1];
+	Color* v1_color = colorsOfVertices[v1->colorId - 1];
+	double v0_color_scale, v1_color_scale;
+
+	v0_color_scale = abs((v_clipped->x - v1->x) / (v1->x - v0->x));
+	v1_color_scale = abs((v0->x - v_clipped->x) / (v1->x - v0->x));
+	Color* color_v0_clipped = new Color(
+		v0_color_scale * v0_color->r + v1_color_scale * v1_color->r,
+		v0_color_scale * v0_color->g + v1_color_scale * v1_color->g,
+		v0_color_scale * v0_color->b + v1_color_scale * v1_color->b);
+	colorsOfVertices.push_back(color_v0_clipped);
+	v_clipped->colorId = colorsOfVertices.size();
 }
+
+bool Scene::isVisible(float d, float num, float* tEnter, float* tLeave)
+{
+	float t = 0;
+	if (d > 0)
+	{
+		t = num / d;
+		if (t > * tLeave)
+		{
+			return false;
+		}
+		if (t > * tEnter)
+		{
+			*tEnter = t;
+		}
+	}
+	else if (d < 0)
+	{
+		t = num / d;
+		if (t < *tEnter)
+		{
+			return false;
+		}
+		if (t < *tLeave)
+		{
+			*tLeave = t;
+		}
+	}
+	else if (num > 0)
+		return  false;
+	return  true;
+}
+
 void Scene::clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Camera* camera)
 {
-	float *tEnter = new float;
-	float *tLeave = new float;
+	float* tEnter = new float;
+	float* tLeave = new float;
 	*tLeave = 1;
 	*tEnter = 0;
 
@@ -477,44 +561,31 @@ void Scene::clipping(Vec4* v0, Vec4* v1, Vec4* v0_clipped, Vec4* v1_clipped, Cam
 								v0_clipped->y = v0->y + dy * (*tEnter);
 								v0_clipped->z = v0->z + dz * (*tEnter);
 							}
+							clipColors(v0, v1, v0_clipped);
+							clipColors(v0, v1, v1_clipped);
 						}
-						
+
 					}
-					
+
 				}
 			}
-			
+
 		}
 	}
 
 }
+
 void Scene::clippingModels(Camera* camera)
 {
 	for (int i = 0; i < models.size(); i++)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
 		{
-			Vec4 *v0 = verticesAssembled[i][j * 3];
-			Vec4 *v1 = verticesAssembled[i][j * 3 + 1];
-			Vec4 *v2 = verticesAssembled[i][j * 3 + 2];
-			if (v0->t == -1 && v1->t == -1 && v2->t == -1)
-				return;
-			v0->x /= v0->t;
-			v0->y /= v0->t;
-			v0->z /= v0->t;
-			v0->t /= v0->t;
-			
-			v1->x /= v1->t;
-			v1->y /= v1->t;
-			v1->z /= v1->t;
-			v1->t /= v1->t;
-			
-			v2->x /= v2->t;
-			v2->y /= v2->t;
-			v2->z /= v2->t;
-			v2->t /= v2->t;
+			Vec4* v0 = verticesAssembled[i][j * 3];
+			Vec4* v1 = verticesAssembled[i][j * 3 + 1];
+			Vec4* v2 = verticesAssembled[i][j * 3 + 2];
 
-			if(models[i]->type == 0)
+			if (models[i]->type == 0)
 			{
 				Vec4* v0_c1 = new Vec4(*v0);
 				Vec4* v1_c1 = new Vec4(*v1);
@@ -522,32 +593,33 @@ void Scene::clippingModels(Camera* camera)
 				Vec4* v0_c3 = new Vec4(*v0);
 				Vec4* v1_c2 = new Vec4(*v1);
 				Vec4* v2_c3 = new Vec4(*v2);
+				
 				clipping(v0, v1, v0_c1, v1_c1, camera);
 				clipping(v1, v2, v1_c2, v2_c2, camera);
 				clipping(v2, v0, v2_c3, v0_c3, camera);
-			
-				
-			
-			    v0->t = -1;
-			    v1->t = -1;
-			    v2->t = -1;
-				
-			    newVertices.push_back(v0_c1);
-			    newVertices.push_back(v1_c1);
-			    newVertices.push_back(v1_c2);
-			    newVertices.push_back(v2_c2);
-			    newVertices.push_back(v2_c3);
-			    newVertices.push_back(v0_c3);
-			    
 
+				v0->t = -1;
+				v1->t = -1;
+				v2->t = -1;
+
+				newVertices.push_back(v0_c1);
+				newVertices.push_back(v1_c1);
+				newVertices.push_back(v1_c2);
+				newVertices.push_back(v2_c2);
+				newVertices.push_back(v2_c3);
+				newVertices.push_back(v0_c3);
 			}
 		}
-
 	}
 }
 
+
+/********************************************
+ * HELPER FUNCTIONS FOR CULLING				*
+ ********************************************/
 void Scene::backfaceCulling(Camera* camera)
 {
+	
 	for (int i = 0; i < models.size(); i++)
 	{
 		for (int j = 0; j < models[i]->numberOfTriangles; j++)
@@ -562,180 +634,35 @@ void Scene::backfaceCulling(Camera* camera)
 			Vec3 normal = crossProductVec3(subtractVec3(v2_3, v1_3), subtractVec3(v3_3, v1_3));
 			Vec3 v = subtractVec3(v1_3, camera->v);
 
-			if (dotProductVec3(normal, v) > 0) 
+			if (dotProductVec3(normal, v) > 0)
 			{
-				
-			//	verticesAssembled[i][j * 3]->t = 1;
-			//	verticesAssembled[i][j * 3 + 1]->t =1;
-			//	verticesAssembled[i][j * 3 + 2]->t =1;
+				verticesAssembled[i][j * 3]->t = 1;
+				verticesAssembled[i][j * 3 + 1]->t = 1;
+				verticesAssembled[i][j * 3 + 2]->t = 1;
 			}
-			else 
+			else
 			{
 				verticesAssembled[i][j * 3]->t = -1;
 				verticesAssembled[i][j * 3 + 1]->t = -1;
 				verticesAssembled[i][j * 3 + 2]->t = -1;
 			}
 		}
-
-
 	}
-
-
-
-
-}
-
-bool Scene::isVisible(float d, float num, float *tEnter, float *tLeave)
-{
-	float t = 0;
-	if (d > 0)
-	{
-		t = num / d;
-		if (t > * tLeave)
-		{
-			return false;
-		}
-		if (t > * tEnter)
-		{
-			*tEnter = t;
-		}
-	}
-	else if (d < 0)
-	{
-		t = num / d;
-		if (t < *tEnter)
-		{
-			return false;
-		}
-		if (t < *tLeave)
-		{
-			*tLeave = t;
-		}
-	}
-	else if (num > 0)
-		return  false;
-	return  true;
 }
 
 
-Vec3 Scene::getPointAtt(Vec3 v0, Vec3 v1, float t)
-{
-	Vec3 p = addVec3(v0, multiplyVec3WithScalar(subtractVec3(v0, v1), t));
-	return p;
-}
-
-
-void Scene::setModelw()
-{
-	for (int i = 0; i < models.size(); i++)
-	{
-		for (int j = 0; j < models[i]->numberOfTriangles; j++)
-		{
-			Vec4* v0 = verticesAssembled[i][j * 3];
-			Vec4* v1 = verticesAssembled[i][j * 3 + 1];
-			Vec4* v2 = verticesAssembled[i][j * 3 + 2];
-			
-			v0->x /= v0->t;
-			v0->y /= v0->t;
-			v0->z /= v0->t;
-			v0->t /= v0->t;
-
-			v1->x /= v1->t;
-			v1->y /= v1->t;
-			v1->z /= v1->t;
-			v1->t /= v1->t;
-
-			v2->x /= v2->t;
-			v2->y /= v2->t;
-			v2->z /= v2->t;
-			v2->t /= v2->t;
-		}
-	}
-
-}
-
-/*
-	Transformations, clipping, culling, rasterization are done here.
-	You can define helper functions inside Scene class implementation.
-*/
-void Scene::forwardRenderingPipeline(Camera *camera)
-{
-	newVertices.clear();
-	verticesAssembled.clear();
-	
-	for (int i = 0; i < models.size(); i++)
-	{
-		vector<Vec4*> modelVertices;
-		for (int j = 0; j < models[i]->numberOfTriangles; j++)
-		{
-			//Vec3* firstVertice = new Vec3(*vertices[models[i]->triangles[j].getFirstVertexId() - 1]);
-			//Vec3* secondVertice = new Vec3(*vertices[models[i]->triangles[j].getSecondVertexId() - 1]);
-			//Vec3* thirdVertice = new Vec3(*vertices[models[i]->triangles[j].getThirdVertexId() - 1]);
-			Vec3 v1 = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
-			Vec3 v2 = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
-			Vec3 v3 = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
-			modelVertices.push_back(new Vec4(v1.x,v1.y,v1.z,1,v1.colorId));
-			modelVertices.push_back(new Vec4(v2.x, v2.y, v2.z, 1, v2.colorId));
-			modelVertices.push_back(new Vec4(v3.x, v3.y, v3.z, 1, v3.colorId));
-		}
-
-		verticesAssembled.push_back(modelVertices);
-	}
-	Matrix4 cameraMatrix = getCameraTransformMatrix(camera);
-
-	Matrix4 projectionMatrix;
-	if(projectionType == 0) // orthographic
-	{
-		projectionMatrix = getOrthographicProjectionMatrix(camera);
-	}
-	else  // perspective
-	{
-		projectionMatrix = getPerspectiveProjectionMatrix(camera);
-	}
-	Matrix4 viewPortMatrix = getViewportProjectionMatrix(camera);
-
-
-	modelingTransformation();
-	transformation(cameraMatrix, camera);
-	transformation(projectionMatrix, camera);
-	setModelw();
-		
-
-	//clippingModels(camera);
-	if (cullingEnabled)
-		backfaceCulling(camera);
-	
-	transformation(viewPortMatrix, camera);
-	for (int i = 0; i < models.size(); i++)
-	{
-		for (int j = 0; j < models[i]->numberOfTriangles; j++)
-		{
-		//	cout << "1: " << *verticesAssembled[i][j * 3]<<endl;
-		//	cout << "2: " << *verticesAssembled[i][j * 3 + 1] << endl;
-		//	cout << "3: " << *verticesAssembled[i][j * 3 + 2] << endl;
-		}
-
-	}
-	rasterization(camera);
-	//Matrix4 worldMatrix = multiplyMatrixWithMatrix(viewPortMatrix, multiplyMatrixWithMatrix(projectionMatrix, cameraMatrix));
-	//modelTransformation(worldMatrix,camera);
-		
-	
-}
-Vec4 * Scene::getVector4(Vec3 vector)
-{
-	Vec4* vec = new Vec4(vector.x, vector.y, vector.z, 1, vector.colorId);
-	return  vec;
-}
+/********************************************
+ * HELPER FUNCTIONS FOR TRANSFORM MATRICES	*
+ ********************************************/
 Matrix4 Scene::getCameraTransformMatrix(Camera* camera)
 {
 	Matrix4 cameraTranslate = getIdentityMatrix();
-	Vec4 *cameraPosition = new Vec4(camera->pos.x, camera->pos.y, camera->pos.z, 1, 0);
+	Vec4* cameraPosition = new Vec4(camera->pos.x, camera->pos.y, camera->pos.z, 1, 0);
 	cameraTranslate.val[0][3] = -camera->pos.x;
 	cameraTranslate.val[1][3] = -camera->pos.y;
 	cameraTranslate.val[2][3] = -camera->pos.z;
 	Matrix4 cameraRotation = getIdentityMatrix();
-	
+
 	cameraRotation.val[0][0] = camera->u.x;
 	cameraRotation.val[0][1] = camera->u.y;
 	cameraRotation.val[0][2] = camera->u.z;
@@ -750,25 +677,27 @@ Matrix4 Scene::getCameraTransformMatrix(Camera* camera)
 
 
 	return multiplyMatrixWithMatrix(cameraRotation, cameraTranslate);
-	
+
 }
+
 Matrix4 Scene::getOrthographicProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
 	float xDistance = camera->right - camera->left;
 	float yDistance = camera->top - camera->bottom;
 	float zDistance = camera->far - camera->near;
-	
-	projectionMatix.val[0][0] = 2/xDistance;
-	projectionMatix.val[1][1] = 2/yDistance;
-	projectionMatix.val[2][2] = -2/zDistance;
 
-	projectionMatix.val[0][3] = -(camera->right+camera->left) / xDistance;
-	projectionMatix.val[1][3] = -(camera->top+camera->bottom) / yDistance;
-	projectionMatix.val[2][3] = -(camera->far+camera->near) / zDistance;
+	projectionMatix.val[0][0] = 2 / xDistance;
+	projectionMatix.val[1][1] = 2 / yDistance;
+	projectionMatix.val[2][2] = -2 / zDistance;
+
+	projectionMatix.val[0][3] = -(camera->right + camera->left) / xDistance;
+	projectionMatix.val[1][3] = -(camera->top + camera->bottom) / yDistance;
+	projectionMatix.val[2][3] = -(camera->far + camera->near) / zDistance;
 
 	return  projectionMatix;
 }
+
 Matrix4 Scene::getPerspectiveProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
@@ -776,20 +705,21 @@ Matrix4 Scene::getPerspectiveProjectionMatrix(Camera* camera)
 	float yDistance = camera->top - camera->bottom;
 	float zDistance = camera->far - camera->near;
 	float two_n = 2 * camera->near;
-	
+
 	projectionMatix.val[0][0] = two_n / xDistance;
 	projectionMatix.val[1][1] = two_n / yDistance;
 	projectionMatix.val[2][2] = -(camera->far + camera->near) / zDistance;
 
 	projectionMatix.val[0][2] = (camera->right + camera->left) / xDistance;
 	projectionMatix.val[1][2] = (camera->top + camera->bottom) / yDistance;
-	
-	projectionMatix.val[2][3] = -2*(camera->far * camera->near) / zDistance;
-	
+
+	projectionMatix.val[2][3] = -2 * (camera->far * camera->near) / zDistance;
+
 	projectionMatix.val[3][2] = -1;
 	projectionMatix.val[3][3] = 0;
 	return  projectionMatix;
 }
+
 Matrix4 Scene::getViewportProjectionMatrix(Camera* camera)
 {
 	Matrix4 projectionMatix = getIdentityMatrix();
@@ -797,7 +727,7 @@ Matrix4 Scene::getViewportProjectionMatrix(Camera* camera)
 	projectionMatix.val[1][1] = camera->verRes / 2.0;
 	projectionMatix.val[2][2] = 0.5;
 
-	projectionMatix.val[0][3] = (camera->horRes -1) / 2.0;
+	projectionMatix.val[0][3] = (camera->horRes - 1) / 2.0;
 	projectionMatix.val[1][3] = (camera->verRes - 1) / 2.0;
 	projectionMatix.val[2][3] = 0.5;
 
@@ -850,18 +780,76 @@ Matrix4 Scene::getRotationMatrix(Rotation* rotation)
 	return rotationMatrix;
 }
 
+
+
+
+/*
+	Transformations, clipping, culling, rasterization are done here.
+	You can define helper functions inside Scene class implementation.
+*/
+void Scene::forwardRenderingPipeline(Camera* camera)
+{
+	newVertices.clear();
+	verticesAssembled.clear();
+
+	for (int i = 0; i < models.size(); i++)
+	{
+		vector<Vec4*> modelVertices;
+		for (int j = 0; j < models[i]->numberOfTriangles; j++)
+		{
+			Vec3 v1 = *vertices[models[i]->triangles[j].getFirstVertexId() - 1];
+			Vec3 v2 = *vertices[models[i]->triangles[j].getSecondVertexId() - 1];
+			Vec3 v3 = *vertices[models[i]->triangles[j].getThirdVertexId() - 1];
+			modelVertices.push_back(new Vec4(v1.x, v1.y, v1.z, 1, v1.colorId));
+			modelVertices.push_back(new Vec4(v2.x, v2.y, v2.z, 1, v2.colorId));
+			modelVertices.push_back(new Vec4(v3.x, v3.y, v3.z, 1, v3.colorId));
+		}
+
+		verticesAssembled.push_back(modelVertices);
+	}
+	Matrix4 cameraMatrix = getCameraTransformMatrix(camera);
+
+	Matrix4 projectionMatrix;
+	if (projectionType == 0) // orthographic
+	{
+		projectionMatrix = getOrthographicProjectionMatrix(camera);
+	}
+	else  // perspective
+	{
+		projectionMatrix = getPerspectiveProjectionMatrix(camera);
+	}
+	Matrix4 viewPortMatrix = getViewportProjectionMatrix(camera);
+
+
+	modelingTransformation();
+	transformation(cameraMatrix, camera);
+	transformation(projectionMatrix, camera);
+
+	setModelw();
+
+
+	if (cullingEnabled)
+		backfaceCulling(camera);
+	clippingModels(camera);
+
+	transformation(viewPortMatrix, camera);
+	rasterization(camera);
+
+
+}
+
 /*
 	Parses XML file
 */
-Scene::Scene(const char *xmlPath)
+Scene::Scene(const char* xmlPath)
 {
-	const char *str;
+	const char* str;
 	XMLDocument xmlDoc;
-	XMLElement *pElement;
+	XMLElement* pElement;
 
 	xmlDoc.LoadFile(xmlPath);
 
-	XMLNode *pRoot = xmlDoc.FirstChild();
+	XMLNode* pRoot = xmlDoc.FirstChild();
 
 	// read background color
 	pElement = pRoot->FirstChildElement("BackgroundColor");
@@ -880,11 +868,11 @@ Scene::Scene(const char *xmlPath)
 
 	// read cameras
 	pElement = pRoot->FirstChildElement("Cameras");
-	XMLElement *pCamera = pElement->FirstChildElement("Camera");
-	XMLElement *camElement;
+	XMLElement* pCamera = pElement->FirstChildElement("Camera");
+	XMLElement* camElement;
 	while (pCamera != NULL)
 	{
-		Camera *cam = new Camera();
+		Camera* cam = new Camera();
 
 		pCamera->QueryIntAttribute("id", &cam->cameraId);
 
@@ -911,8 +899,8 @@ Scene::Scene(const char *xmlPath)
 		camElement = pCamera->FirstChildElement("ImagePlane");
 		str = camElement->GetText();
 		sscanf(str, "%lf %lf %lf %lf %lf %lf %d %d",
-			   &cam->left, &cam->right, &cam->bottom, &cam->top,
-			   &cam->near, &cam->far, &cam->horRes, &cam->verRes);
+			&cam->left, &cam->right, &cam->bottom, &cam->top,
+			&cam->near, &cam->far, &cam->horRes, &cam->verRes);
 
 		camElement = pCamera->FirstChildElement("OutputName");
 		str = camElement->GetText();
@@ -925,13 +913,13 @@ Scene::Scene(const char *xmlPath)
 
 	// read vertices
 	pElement = pRoot->FirstChildElement("Vertices");
-	XMLElement *pVertex = pElement->FirstChildElement("Vertex");
+	XMLElement* pVertex = pElement->FirstChildElement("Vertex");
 	int vertexId = 1;
 
 	while (pVertex != NULL)
 	{
-		Vec3 *vertex = new Vec3();
-		Color *color = new Color();
+		Vec3* vertex = new Vec3();
+		Color* color = new Color();
 
 		vertex->colorId = vertexId;
 
@@ -951,10 +939,10 @@ Scene::Scene(const char *xmlPath)
 
 	// read translations
 	pElement = pRoot->FirstChildElement("Translations");
-	XMLElement *pTranslation = pElement->FirstChildElement("Translation");
+	XMLElement* pTranslation = pElement->FirstChildElement("Translation");
 	while (pTranslation != NULL)
 	{
-		Translation *translation = new Translation();
+		Translation* translation = new Translation();
 
 		pTranslation->QueryIntAttribute("id", &translation->translationId);
 
@@ -968,10 +956,10 @@ Scene::Scene(const char *xmlPath)
 
 	// read scalings
 	pElement = pRoot->FirstChildElement("Scalings");
-	XMLElement *pScaling = pElement->FirstChildElement("Scaling");
+	XMLElement* pScaling = pElement->FirstChildElement("Scaling");
 	while (pScaling != NULL)
 	{
-		Scaling *scaling = new Scaling();
+		Scaling* scaling = new Scaling();
 
 		pScaling->QueryIntAttribute("id", &scaling->scalingId);
 		str = pScaling->Attribute("value");
@@ -984,10 +972,10 @@ Scene::Scene(const char *xmlPath)
 
 	// read rotations
 	pElement = pRoot->FirstChildElement("Rotations");
-	XMLElement *pRotation = pElement->FirstChildElement("Rotation");
+	XMLElement* pRotation = pElement->FirstChildElement("Rotation");
 	while (pRotation != NULL)
 	{
-		Rotation *rotation = new Rotation();
+		Rotation* rotation = new Rotation();
 
 		pRotation->QueryIntAttribute("id", &rotation->rotationId);
 		str = pRotation->Attribute("value");
@@ -1001,18 +989,18 @@ Scene::Scene(const char *xmlPath)
 	// read models
 	pElement = pRoot->FirstChildElement("Models");
 
-	XMLElement *pModel = pElement->FirstChildElement("Model");
-	XMLElement *modelElement;
+	XMLElement* pModel = pElement->FirstChildElement("Model");
+	XMLElement* modelElement;
 	while (pModel != NULL)
 	{
-		Model *model = new Model();
+		Model* model = new Model();
 
 		pModel->QueryIntAttribute("id", &model->modelId);
 		pModel->QueryIntAttribute("type", &model->type);
 
 		// read model transformations
-		XMLElement *pTransformations = pModel->FirstChildElement("Transformations");
-		XMLElement *pTransformation = pTransformations->FirstChildElement("Transformation");
+		XMLElement* pTransformations = pModel->FirstChildElement("Transformations");
+		XMLElement* pTransformation = pTransformations->FirstChildElement("Transformation");
 
 		pTransformations->QueryIntAttribute("count", &model->numberOfTransformations);
 
@@ -1031,8 +1019,8 @@ Scene::Scene(const char *xmlPath)
 		}
 
 		// read model triangles
-		XMLElement *pTriangles = pModel->FirstChildElement("Triangles");
-		XMLElement *pTriangle = pTriangles->FirstChildElement("Triangle");
+		XMLElement* pTriangles = pModel->FirstChildElement("Triangles");
+		XMLElement* pTriangle = pTriangles->FirstChildElement("Triangle");
 
 		pTriangles->QueryIntAttribute("count", &model->numberOfTriangles);
 
@@ -1057,7 +1045,7 @@ Scene::Scene(const char *xmlPath)
 /*
 	Initializes image with background color
 */
-void Scene::initializeImage(Camera *camera)
+void Scene::initializeImage(Camera* camera)
 {
 	if (this->image.empty())
 	{
@@ -1107,7 +1095,7 @@ int Scene::makeBetweenZeroAnd255(double value)
 /*
 	Writes contents of image (Color**) into a PPM file.
 */
-void Scene::writeImageToPPMFile(Camera *camera)
+void Scene::writeImageToPPMFile(Camera* camera)
 {
 	ofstream fout;
 
@@ -1123,8 +1111,8 @@ void Scene::writeImageToPPMFile(Camera *camera)
 		for (int i = 0; i < camera->horRes; i++)
 		{
 			fout << makeBetweenZeroAnd255(this->image[i][j].r) << " "
-				 << makeBetweenZeroAnd255(this->image[i][j].g) << " "
-				 << makeBetweenZeroAnd255(this->image[i][j].b) << " ";
+				<< makeBetweenZeroAnd255(this->image[i][j].g) << " "
+				<< makeBetweenZeroAnd255(this->image[i][j].b) << " ";
 		}
 		fout << endl;
 	}

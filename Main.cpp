@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
 	// Testing
 	argc = 2;
-	const char* xmlPath = "different_projection_type_example/flag_turkey/flag_turkey_perspective.xml";
+	const char* xmlPath = "different_projection_type_example/horse_and_mug/horse_and_mug_orthographic.xml";
 	//
 	
     if (argc != 2)
