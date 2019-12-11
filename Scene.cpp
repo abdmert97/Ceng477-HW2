@@ -217,7 +217,41 @@ void Scene::rasterization(Camera* camera)
 
 			if(models[i]->type == 0)
 			{
-				
+				int x_0, y_0, x_1, y_1;
+				// vertice1 -> vertice2
+
+
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(firstVertice.x);
+					y_0 = round(firstVertice.y);
+					x_1 = round(secondVertice.x);
+					y_1 = round(secondVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[firstVertice.colorId - 1], x_1, y_1, colorsOfVertices[secondVertice.colorId - 1], camera);
+				}
+
+
+				// vertice2 -> vertice3
+
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(secondVertice.x);
+					y_0 = round(secondVertice.y);
+					x_1 = round(thirdVertice.x);
+					y_1 = round(thirdVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[secondVertice.colorId - 1], x_1, y_1, colorsOfVertices[thirdVertice.colorId - 1], camera);
+				}
+
+				// vertice3 -> vertice1
+
+				if (firstVertice.t == 1 && secondVertice.t == 1)
+				{
+					x_0 = round(thirdVertice.x);
+					y_0 = round(thirdVertice.y);
+					x_1 = round(firstVertice.x);
+					y_1 = round(firstVertice.y);
+					lineRasterization(x_0, y_0, colorsOfVertices[thirdVertice.colorId - 1], x_1, y_1, colorsOfVertices[firstVertice.colorId - 1], camera);
+				}
 				
 			}
 			else
@@ -235,7 +269,7 @@ void Scene::rasterization(Camera* camera)
 		}
 	}
 
-	if (newVertices.size() == 0) return;
+	/*if (newVertices.size() == 0) return;
 	for (int i = 0; i < newVertices.size()-1; i+=2)
 	{
 			
@@ -256,7 +290,7 @@ void Scene::rasterization(Camera* camera)
 				}
 
 
-	}
+	}*/
 		
 		
 }
@@ -666,10 +700,10 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 	transformation(projectionMatrix, camera);
 	setModelw();
 		
+
+	//clippingModels(camera);
 	if (cullingEnabled)
 		backfaceCulling(camera);
-	clippingModels(camera);
-
 	
 	transformation(viewPortMatrix, camera);
 	for (int i = 0; i < models.size(); i++)
