@@ -378,12 +378,7 @@ void Scene::triangleRasterization(Camera* camera,
 
 void Scene::rasterization(Camera* camera)
 {
-	for (int i = 0; i < newVertices.size(); ++i)
-	{
-		delete newVertices[i];
 
-	}
-	newVertices.clear();
 	for (int i = 0; i < models.size(); i++)
 	{
 
@@ -450,7 +445,7 @@ void Scene::rasterization(Camera* camera)
 
 		}
 	}
-	return;
+
 	int test = 0;
 	if (newVertices.size() == 0) return;
 	for (int i = 0; i < newVertices.size() - 1; i += 2)
