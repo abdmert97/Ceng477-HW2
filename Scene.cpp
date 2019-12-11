@@ -427,9 +427,9 @@ void Scene::rasterization(Camera* camera)
 				// TRIANGLE RASTERIZATION
 				if ((firstVertice.t == 1 && secondVertice.t == 1 && thirdVertice.t == 1) || !cullingEnabled)
 					triangleRasterization(camera,
-						firstVertice.x, firstVertice.y, colorsOfVertices[firstVertice.colorId - 1],
-						secondVertice.x, secondVertice.y, colorsOfVertices[secondVertice.colorId - 1],
-						thirdVertice.x, thirdVertice.y, colorsOfVertices[thirdVertice.colorId - 1]);
+						ceil(firstVertice.x), ceil(firstVertice.y), colorsOfVertices[firstVertice.colorId - 1],
+						ceil(secondVertice.x), ceil(secondVertice.y), colorsOfVertices[secondVertice.colorId - 1],
+						ceil(thirdVertice.x), ceil(thirdVertice.y), colorsOfVertices[thirdVertice.colorId - 1]);
 			}
 
 			

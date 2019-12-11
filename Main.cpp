@@ -11,12 +11,6 @@ Scene *scene;
 
 int main(int argc, char *argv[])
 {
-
-	// Testing
-	argc = 2;
-	const char* xmlPath = "different_projection_type_example/horse_and_mug/horse_and_mug_orthographic.xml";
-	//
-	
     if (argc != 2)
     {
         cout << "Please run the rasterizer as:" << endl
@@ -25,7 +19,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        //const char *xmlPath = argv[1];
+        const char *xmlPath = argv[1];
 
         scene = new Scene(xmlPath);
 
